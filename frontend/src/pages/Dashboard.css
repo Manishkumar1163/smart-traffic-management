@@ -1,0 +1,294 @@
+﻿/* --- Global Styles & Layout --- */
+
+:root {
+    /* Define a color palette for better consistency and easy modification */
+    --primary-color: #4c51bf;
+    /* Indigo/Deep Blue */
+    --secondary-color: #38a169;
+    /* Medium Green */
+    --background-light: #f4f6f9;
+    --card-background: #ffffff;
+    /* White */
+    --text-dark: #1a202c;
+    --text-medium: #4a5568;
+    --text-light: #718096;
+    --shadow-base: 0 4px 12px rgba(0, 0, 0, 0.05);
+    --shadow-hover: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+body {
+    /* Assuming the body background is what defines the dark background shown in the image */
+    background-color: #32354c;
+    /* Using a darker tone based on the image */
+    font-family: 'Inter', sans-serif;
+    /* Use a modern, readable font */
+    padding: 20px;
+}
+
+.dashboard-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+    animation: fadeIn 0.8s ease-out;
+    /* Slightly longer and smoother fade */
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* CHANGE: Set color to white (var(--card-background)) and added shadow for contrast */
+
+.dashboard-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--card-background);
+    /* NOW WHITE */
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+    /* Added subtle shadow for depth */
+    margin-bottom: 2.5rem;
+    border-left: 5px solid var(--primary-color);
+    padding-left: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+
+/* --- Stats Grid & Cards --- */
+
+.stats-grid {
+    display: grid;
+    /* Adjusted minmax for better flow on larger screens */
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.stat-card {
+    background: var(--card-background);
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow-base);
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    /* Enhanced transition timing */
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    /* Subtle border for definition */
+}
+
+
+/* Note: The '::before' pseudo-element styling is less relevant since the JS uses inline background styles, 
+   but it's kept for potential future use as a simple card border hint. */
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background-color: transparent;
+}
+
+
+/* The hover effect on the entire card */
+
+.stat-card:hover {
+    transform: translateY(-8px);
+    /* Deeper lift on hover */
+    box-shadow: var(--shadow-hover);
+    border-color: #a0aec0;
+    /* Darken border on hover */
+}
+
+
+/* Specific styles for clickable cards */
+
+.stat-card.clickable {
+    cursor: pointer;
+}
+
+
+/* Visual cue for hover on clickable cards */
+
+.stat-card.clickable:hover .stat-icon {
+    transform: scale(1.1) rotate(5deg);
+    /* Added a slight rotation */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.stat-icon {
+    /* Adjusted style to make the icon container a distinct, colorful circle/square */
+    width: 60px;
+    height: 60px;
+    min-width: 60px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.8rem;
+    color: white;
+    /* Make the icon/emoji white to stand out on the colored background */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease;
+}
+
+.stat-content {
+    flex-grow: 1;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+.stat-value {
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: var(--text-dark);
+    margin: 0;
+    line-height: 1.2;
+}
+
+
+/* --- System Overview Section --- */
+
+.overview-section {
+    background: var(--card-background);
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow-base);
+    border: 1px solid #e2e8f0;
+}
+
+.section-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 3px solid #f0f4f8;
+}
+
+
+/* CRITICAL CHANGE: Sets the grid to one column for vertical stacking */
+
+.overview-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+.overview-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.2rem 1.5rem;
+    /* Adjusted padding for better look in vertical layout */
+    background: #fcfdff;
+    /* Very light background for items */
+    border-radius: 8px;
+    border-left: 5px solid var(--primary-color);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.overview-item:hover {
+    background: #eef3f7;
+    /* Subtle hover color */
+    border-left-color: var(--secondary-color);
+}
+
+.overview-label {
+    font-weight: 500;
+    color: var(--text-medium);
+}
+
+.overview-value {
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 1.2rem;
+}
+
+.status-badge {
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 50px;
+    font-size: 0.9rem;
+}
+
+.status-badge.active {
+    color: #059669;
+    /* Darker green */
+    background-color: #d1fae5;
+    /* Light green background */
+}
+
+
+/* Pulse animation for active status */
+
+.status-badge.active::before {
+    content: '•';
+    font-size: 1.5rem;
+    color: #10b981;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.5;
+        transform: scale(0.85);
+    }
+}
+
+
+/* --- Media Queries for Responsiveness --- */
+
+@media (max-width: 1024px) {
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+    .stat-value {
+        font-size: 2rem;
+    }
+    .dashboard-container {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    .dashboard-title {
+        font-size: 2rem;
+    }
+    /* Even though overview-grid is already 1fr, this ensures consistency */
+    .overview-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,294 @@
+/* --- Global Variables and Base Layout --- */
+
+:root {
+    --primary-color: #667eea;
+    /* Indigo/Deep Blue */
+    --secondary-color: #764ba2;
+    /* Purple gradient end */
+    --background-dark: #2c2f4a;
+    /* Darker background for depth */
+    --background-light: #f4f6f9;
+    --card-background: #ffffff;
+    /* White */
+    --text-dark: #1a202c;
+    --text-medium: #4a5568;
+    --shadow-base: 0 6px 16px rgba(0, 0, 0, 0.1);
+    --shadow-hover: 0 12px 28px rgba(0, 0, 0, 0.2);
+}
+
+body {
+    /* Apply the dark-to-light gradient background for a modern look */
+    background: linear-gradient(135deg, var(--background-dark) 0%, #4a5568 100%);
+    font-family: 'Inter', sans-serif;
+}
+
+.videos-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 3rem 2rem;
+    /* Increased vertical padding */
+}
+
+
+/* CRITICAL FIX: Used !important to force the color override. */
+
+.page-title {
+    color: var(--card-background) !important;
+    /* FORCED TO WHITE */
+    margin-bottom: 2.5rem;
+    /* Increased margin */
+    font-size: 2.8rem;
+    /* Larger font size */
+    font-weight: 800;
+    text-shadow: none;
+    /* Ensure no competing shadows */
+    border-bottom: 3px solid var(--primary-color);
+    padding-bottom: 0.5rem;
+}
+
+.loading,
+.no-data {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 4rem;
+    font-size: 1.4rem;
+    color: var(--background-light);
+    /* Light text on dark background */
+}
+
+
+/* --- Videos Grid & Cards --- */
+
+.videos-grid {
+    display: grid;
+    /* Consistent columns, increased minimum size */
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 2.5rem;
+    /* Increased gap for better visual separation */
+}
+
+.video-card {
+    background: var(--card-background);
+    border-radius: 16px;
+    /* Slightly more rounded corners */
+    padding: 1.75rem;
+    /* Increased padding */
+    box-shadow: var(--shadow-base);
+    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    border: 1px solid #e0e0e0;
+    /* Subtle card border */
+    display: flex;
+    /* Ensures content fills the card vertically */
+    flex-direction: column;
+}
+
+.video-card:hover {
+    transform: translateY(-8px);
+    /* Deeper lift on hover */
+    box-shadow: var(--shadow-hover);
+}
+
+.video-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 1.25rem;
+}
+
+.video-icon {
+    font-size: 2.5rem;
+    /* Larger icon */
+    color: var(--primary-color);
+}
+
+.video-header h3 {
+    color: var(--text-dark);
+    margin: 0;
+    font-size: 1.25rem;
+    /* Larger and bolder title */
+    font-weight: 700;
+    word-break: break-word;
+}
+
+.video-details {
+    margin-bottom: 1.75rem;
+    /* More space before actions */
+    flex-grow: 1;
+    /* Pushes action buttons to the bottom */
+}
+
+.video-details p {
+    margin: 0.6rem 0;
+    color: var(--text-medium);
+    font-size: 1rem;
+    display: flex;
+    justify-content: space-between;
+    /* Aligns key/value pairs */
+}
+
+.video-details strong {
+    color: var(--text-dark);
+    font-weight: 600;
+}
+
+.status {
+    padding: 0.3rem 0.8rem;
+    border-radius: 50px;
+    /* Fully rounded pill shape */
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 0;
+    /* Align status text consistently */
+}
+
+.status.processed {
+    background: #d1fae5;
+    color: #047857;
+    /* Darker, richer green */
+}
+
+.status.pending {
+    background: #fef3c7;
+    color: #b45309;
+    /* Darker, richer orange */
+    animation: pulse-pending 2s infinite;
+    /* Added a subtle animation for pending */
+}
+
+@keyframes pulse-pending {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.8;
+    }
+}
+
+.video-actions {
+    display: flex;
+    gap: 1.25rem;
+    margin-top: auto;
+    /* Ensures actions are always at the bottom */
+}
+
+.btn-view,
+.btn-delete {
+    flex: 1;
+    padding: 0.9rem;
+    /* Increased padding */
+    border: none;
+    border-radius: 10px;
+    /* Slightly larger radius */
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    /* Subtle shadow on buttons */
+}
+
+.btn-view {
+    /* Maintained gradient for a distinct primary action */
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white;
+}
+
+.btn-view:hover:not(:disabled) {
+    transform: translateY(-3px);
+    /* Deeper lift on hover */
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.6);
+}
+
+.btn-view:disabled {
+    background: #e2e8f0;
+    color: #a0aec0;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+.btn-delete {
+    background: #ef4444;
+    color: white;
+}
+
+.btn-delete:hover {
+    background: #cc1d1d;
+    /* Darker red on hover */
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.6);
+}
+
+
+/* --- Modal Enhancements --- */
+
+.modal-overlay {
+    background: rgba(44, 47, 74, 0.85);
+    /* Darker, richer overlay */
+    backdrop-filter: blur(5px);
+    /* Added blur effect */
+}
+
+.modal-content {
+    border-radius: 20px;
+    /* Larger radius for a smoother modal */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    padding: 1.5rem 2.5rem;
+    /* Increased padding */
+    border-bottom: 3px solid #f0f0f0;
+}
+
+.modal-header h2 {
+    font-weight: 700;
+    font-size: 1.6rem;
+}
+
+.close-btn {
+    font-size: 2.2rem;
+    color: var(--text-medium);
+}
+
+.close-btn:hover {
+    background: #f0f0f0;
+    color: var(--text-dark);
+}
+
+.modal-body {
+    padding: 2.5rem;
+}
+
+.detection-item {
+    background: #fcfdff;
+    border-radius: 16px;
+    padding: 2rem;
+    /* Increased padding for detection items */
+    border-left: 6px solid var(--primary-color);
+    /* Thicker highlight bar */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.detection-type {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+}
+
+.detection-screenshot {
+    border-radius: 12px;
+}
+
+@media (max-width: 768px) {
+    .videos-grid {
+        grid-template-columns: 1fr;
+    }
+    .modal-body {
+        padding: 1.5rem;
+    }
+}

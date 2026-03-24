@@ -1,0 +1,31 @@
+﻿node_modules/
+venv/
+__pycache__/
+.env
+uploads/
+*.pyc# Backend
+backend/venv/
+backend/__pycache__/
+backend/*.pyc
+backend/.env
+backend/uploads/videos/*
+backend/uploads/screenshots/*
+!backend/uploads/videos/.gitkeep
+!backend/uploads/screenshots/.gitkeep
+# Frontend
+frontend/node_modules/
+frontend/build/
+frontend/.env
+# Documentation
+docs/*.pdf
+# Screenshots
+screenshots/*.png
+screenshots/*.jpg
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+# OS
+.DS_Store
+Thumbs.db

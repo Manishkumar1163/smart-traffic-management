@@ -1,0 +1,422 @@
+﻿/* --- Global Variables and Base Layout (Matching other components) --- */
+
+:root {
+    --primary-color: #667eea;
+    /* Indigo/Deep Blue */
+    --secondary-color: #764ba2;
+    /* Purple gradient end */
+    --background-dark: #2c2f4a;
+    /* Dark background for the page */
+    --background-gradient: linear-gradient(135deg, #2c2f4a 0%, #4a5568 100%);
+    --card-background: #ffffff;
+    /* White */
+    --text-dark: #1a202c;
+    --text-medium: #4a5568;
+    --success-light: #d1fae5;
+    --success-dark: #047857;
+    --warning-light: #fef3c7;
+    --warning-dark: #b45309;
+}
+
+body {
+    background: var(--background-gradient);
+    font-family: 'Inter', sans-serif;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.drivers-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 3rem 2rem;
+    animation: fadeIn 0.7s ease-out;
+}
+
+.page-title {
+    color: var(--card-background);
+    /* NOW WHITE */
+    margin-bottom: 2.5rem;
+    font-size: 2.8rem;
+    font-weight: 800;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    padding-bottom: 0.5rem;
+    text-align: center;
+}
+
+.loading,
+.no-data {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 4rem;
+    font-size: 1.4rem;
+    color: #e2e8f0;
+}
+
+
+/* --- Search Section Enhancement --- */
+
+.search-section {
+    margin-bottom: 2.5rem;
+    display: flex;
+    justify-content: center;
+}
+
+.search-input {
+    width: 100%;
+    max-width: 600px;
+    /* Increased max width */
+    padding: 1rem 1.5rem;
+    border: 2px solid var(--primary-color);
+    border-radius: 10px;
+    font-size: 1rem;
+    color: var(--text-dark);
+    background-color: var(--card-background);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    /* FIX: Ensures placeholder text is clear and fully visible */
+    box-sizing: border-box;
+}
+
+.search-input::placeholder {
+    color: var(--text-medium);
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.3);
+}
+
+
+/* --- Driver Grid & Card Styles --- */
+
+.drivers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2rem;
+    /* Increased gap */
+}
+
+.driver-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    display: flex;
+    gap: 1.5rem;
+    border: 1px solid #e0e0e0;
+}
+
+.driver-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.driver-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.driver-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.driver-name {
+    font-size: 1.4rem;
+    color: var(--text-dark);
+    margin: 0;
+    font-weight: 700;
+}
+
+.driver-plate {
+    margin: 0;
+}
+
+.plate-badge {
+    background: var(--primary-color);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+    font-weight: 800;
+    font-size: 1.15rem;
+    display: inline-block;
+}
+
+.driver-contact,
+.driver-address {
+    color: var(--text-medium);
+    font-size: 0.95rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.driver-address {
+    color: #888;
+    align-items: flex-start;
+    font-size: 0.9rem;
+}
+
+.btn-view-driver {
+    margin-top: 0.5rem;
+    padding: 0.8rem 1.5rem;
+    /* Increased padding */
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    /* Slightly larger radius */
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-view-driver:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+
+/* --- Modal Styles --- */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(44, 47, 74, 0.85);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.modal-content {
+    background: var(--card-background);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 700px;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.modal-header h2 {
+    margin: 0;
+    color: var(--text-dark);
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 2.5rem;
+    color: var(--text-medium);
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.modal-close:hover {
+    background: #f0f0f0;
+    color: var(--text-dark);
+}
+
+.modal-body {
+    padding: 2rem;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.driver-details-section h3,
+.violations-history-section h3 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e0e0e0;
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-top: 0;
+    /* Override default top margin */
+}
+
+.detail-row {
+    display: flex;
+    padding: 0.5rem 0;
+    border-bottom: 1px dotted #f0f0f0;
+}
+
+.detail-label {
+    font-weight: 500;
+    color: var(--text-medium);
+    width: 150px;
+    /* Fixed width for alignment */
+    flex-shrink: 0;
+}
+
+.detail-value {
+    color: var(--text-dark);
+    font-weight: 600;
+    flex-grow: 1;
+}
+
+.violations-history-section {
+    margin-top: 2.5rem;
+}
+
+.no-violations {
+    text-align: center;
+    padding: 2rem;
+    color: #999;
+    background: #f9fafb;
+    border-radius: 8px;
+    border: 1px dashed #e0e0e0;
+}
+
+.violations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.violation-item {
+    background: #f9fafb;
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 5px solid #ef4444;
+    /* Use red for violation highlight */
+    transition: all 0.3s ease;
+}
+
+.violation-item:hover {
+    background: #f3f4f6;
+    transform: translateX(3px);
+}
+
+.violation-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.violation-type {
+    font-weight: 700;
+    color: #ef4444;
+    font-size: 1.1rem;
+}
+
+.violation-item-details p {
+    color: var(--text-medium);
+}
+
+
+/* Status Badges within the modal violation list */
+
+.violation-item .status-badge {
+    padding: 0.3rem 0.8rem;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+}
+
+.violation-item .status-badge.pending {
+    background: var(--warning-light);
+    color: var(--warning-dark);
+}
+
+.violation-item .status-badge.paid {
+    background: var(--success-light);
+    color: var(--success-dark);
+}
+
+.modal-footer {
+    padding: 1rem 2rem;
+    border-top: 1px solid #e0e0e0;
+    text-align: right;
+}
+
+.btn-close-modal {
+    padding: 0.75rem 1.5rem;
+    background-color: var(--text-medium);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.btn-close-modal:hover {
+    background-color: var(--text-dark);
+}
+
+@media (max-width: 768px) {
+    .drivers-grid {
+        grid-template-columns: 1fr;
+    }
+    .driver-card {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    .driver-info {
+        align-items: center;
+    }
+    .search-input {
+        max-width: 90%;
+    }
+    .modal-content {
+        max-width: 95%;
+    }
+    .detail-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .detail-label {
+        width: auto;
+        margin-bottom: 0.2rem;
+    }
+}

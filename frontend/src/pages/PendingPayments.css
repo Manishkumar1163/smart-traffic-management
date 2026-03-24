@@ -1,0 +1,253 @@
+.pending-payments-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.page-title {
+    color: #333;
+    font-size: 2rem;
+    margin: 0;
+}
+
+.summary {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+}
+
+.summary-count {
+    background: #fef3c7;
+    color: #92400e;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+.summary-amount {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+.loading {
+    text-align: center;
+    padding: 3rem;
+    font-size: 1.2rem;
+    color: #666;
+}
+
+.no-data {
+    background: white;
+    border-radius: 16px;
+    padding: 4rem 2rem;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.no-data p {
+    font-size: 1.5rem;
+    color: #10b981;
+    margin: 0.5rem 0;
+}
+
+.sub-text {
+    color: #999;
+    font-size: 1rem !important;
+}
+
+.violations-table-container {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.violations-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.violations-table thead {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.violations-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+}
+
+.violations-table tbody tr {
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.3s ease;
+}
+
+.violations-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+.violations-table td {
+    padding: 1rem;
+    color: #555;
+}
+
+.license-plate {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    font-size: 1rem;
+    color: #333 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    padding: 0;
+    border: none !important;
+    border-radius: 0;
+    letter-spacing: 0.5px;
+    box-shadow: none !important;
+}
+
+.violation-badge {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.violation-badge.no_helmet {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.violation-badge.triple_riding {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.violation-badge.red_light_violation {
+    background: #fecaca;
+    color: #7f1d1d;
+}
+
+.violation-badge.overspeeding {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.amount {
+    font-weight: 700;
+    color: #059669;
+    font-size: 1.1rem;
+}
+
+
+/* ... existing CSS ... */
+
+.btn-screenshot {
+    background: #667eea;
+    color: white;
+    border: none;
+    /* Match the vertical padding of the action buttons */
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    font-size: 0.85rem;
+    /* Crucial additions for size match: */
+    /* Estimate a minimum width based on the 'Waive' button's content and padding */
+    min-width: 85px;
+    /* Ensures the text is centered within the button */
+    text-align: center;
+    height: 48px;
+    line-height: 35px;
+    /* Use the same value as height for perfect vertical centering */
+    padding: 0 1rem;
+}
+
+.btn-screenshot:hover {
+    background: #5568d3;
+    transform: translateY(-2px);
+}
+
+.btn-waive:hover:not(:disabled) {
+    background: #d97706;
+    transform: translateY(-2px);
+}
+
+
+/* ... existing CSS ... */
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-pay,
+.btn-waive {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.85rem;
+}
+
+.btn-pay {
+    background: #10b981;
+    color: white;
+}
+
+.btn-pay:hover:not(:disabled) {
+    background: #059669;
+    transform: translateY(-2px);
+}
+
+.btn-waive {
+    background: #f59e0b;
+    color: white;
+}
+
+.btn-pay:disabled,
+.btn-waive:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+@media (max-width: 1200px) {
+    .violations-table-container {
+        overflow-x: auto;
+    }
+    .violations-table {
+        min-width: 1000px;
+    }
+}
+
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .summary {
+        width: 100%;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}

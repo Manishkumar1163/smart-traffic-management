@@ -1,0 +1,285 @@
+﻿.payment-container {
+    animation: fadeIn 0.5s ease-in;
+}
+
+.payment-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.violation-summary,
+.payment-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.violation-summary h2,
+.payment-section h2 {
+    color: #333;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f3f4f6;
+    font-size: 1.5rem;
+}
+
+.summary-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+
+.summary-row.total {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-top: 1rem;
+}
+
+.summary-value {
+    font-weight: 600;
+    color: #333;
+}
+
+.summary-row.total .summary-value {
+    color: white;
+}
+
+.evidence-preview {
+    margin-top: 1.5rem;
+}
+
+.evidence-preview h3 {
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.evidence-thumb {
+    width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.payment-method-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.method-btn {
+    padding: 1rem;
+    border: 2px solid #e5e7eb;
+    background: white;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.method-btn:hover {
+    border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.method-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: #667eea;
+}
+
+.online-payment-container,
+.offline-payment-container {
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.online-payment-container h3,
+.offline-payment-container h3 {
+    color: #333;
+    margin-bottom: 1.5rem;
+    font-size: 1.2rem;
+}
+
+.payment-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.card-element-container {
+    padding: 1.5rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    background: #f9fafb;
+}
+
+.payment-message {
+    padding: 1rem;
+    border-radius: 8px;
+    font-weight: 500;
+    text-align: center;
+}
+
+.payment-message.success {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #10b981;
+}
+
+.payment-message.error {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #ef4444;
+}
+
+.payment-submit-btn {
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.payment-submit-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.payment-submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.payment-info {
+    text-align: center;
+    padding: 1rem;
+    background: #f0f9ff;
+    border-radius: 8px;
+    margin-top: 1rem;
+}
+
+.payment-info p {
+    margin: 0.25rem 0;
+    color: #0369a1;
+    font-size: 0.9rem;
+}
+
+.offline-instructions {
+    padding: 1.5rem;
+    background: #f9fafb;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+}
+
+.offline-instructions p {
+    color: #666;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.offline-instructions ol {
+    padding-left: 1.5rem;
+    color: #333;
+}
+
+.offline-instructions li {
+    padding: 0.5rem 0;
+    line-height: 1.6;
+}
+
+.offline-instructions strong {
+    color: #667eea;
+}
+
+.offline-confirm-btn {
+    margin-top: 1.5rem;
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.offline-confirm-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+@media (max-width: 968px) {
+    .payment-layout {
+        grid-template-columns: 1fr;
+    }
+    .payment-method-selector {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* Styling for the license plate text/badge */
+/* Styling for the license plate text/badge */
+.license-plate {
+    font-family: 'Courier New', monospace; 
+    font-weight: 900; 
+    color: #333; /* Changed text color to DARK GRAY for contrast */
+    background: white; /* Changed badge background color to WHITE */
+    padding: 0.4rem 0.6rem; 
+    border-radius: 4px; 
+    display: inline-block; 
+    letter-spacing: 0.5px;
+    /* Added a subtle border to define the plate edge against light cell backgrounds */
+    border: 1px solid #ccc; 
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); 
+}
+@media (max-width: 768px) {
+    .violation-summary,
+    .payment-section {
+        padding: 1.5rem;
+    }
+    .summary-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}

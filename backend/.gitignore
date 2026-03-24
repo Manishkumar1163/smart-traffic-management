@@ -1,0 +1,18 @@
+﻿# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+# Environment
+.env
+.env.local
+# Uploads
+uploads/videos/*
+uploads/screenshots/*
+!uploads/videos/.gitkeep
+!uploads/screenshots/.gitkeep
+# IDE
+.vscode/
+.idea/

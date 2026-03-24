@@ -1,0 +1,85 @@
+﻿/* ⚠️ PASTE COMPLETE RegisterDriver.CSS CODE FROM CLAUDE HERE */
+
+
+/* .-container {
+  padding: 20px;
+} */
+
+.register-container {
+    max-width: 800px;
+    margin: 0 auto;
+    animation: fadeIn 0.5s ease-in;
+}
+
+.register-card {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.register-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.textarea-input {
+    padding: 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+    resize: vertical;
+    transition: all 0.3s ease;
+}
+
+.textarea-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.textarea-input:disabled {
+    background: #f9fafb;
+    cursor: not-allowed;
+}
+
+.form-info {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: #f0f9ff;
+    border-radius: 8px;
+    border-left: 4px solid #0ea5e9;
+}
+
+.form-info h3 {
+    color: #0c4a6e;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.form-info ul {
+    list-style: none;
+    padding: 0;
+}
+
+.form-info li {
+    padding: 0.5rem 0;
+    color: #0369a1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-info li::before {
+    content: '●';
+    color: #0ea5e9;
+    font-size: 1.2rem;
+}
+
+@media (max-width: 768px) {
+    .register-card {
+        padding: 1.5rem;
+    }
+}
