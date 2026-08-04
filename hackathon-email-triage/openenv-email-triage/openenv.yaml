@@ -1,0 +1,13 @@
+name: "AI Email Triage & Response System"
+description: "Simulates how employees manage inbox overload by classifying, prioritizing, and replying to emails."
+author: "Hackathon Participant"
+tags:
+  - natural-language
+  - productivity
+  - triage
+  - customer-support
+tasks:
+  - email-triage-easy
+  - email-triage-medium
+  - email-triage-hard
+openenv_version: "1.0.0"
