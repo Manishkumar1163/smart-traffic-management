@@ -1,18 +1,33 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './Login.css';
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+import Alert from '@mui/material/Alert';
+import MenuItem from '@mui/material/MenuItem';
+import Stack from '@mui/material/Stack';
+import TrafficIcon from '@mui/icons-material/Traffic';
 
-function Login() {
+import { useAuth } from '../context/AuthContext';
+
+export default function Login() {
+  const { login, registerUser } = useAuth();
+  const navigate = useNavigate();
+
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     name: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    role: 'viewer'
   });
-  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({
@@ -23,157 +38,187 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage('');
+    setError('');
+    setSuccess('');
 
     if (isLogin) {
-      // Login validation
       if (!formData.email || !formData.password) {
-        setMessage('❌ Please enter email and password');
+        setError('Please enter your email and password');
         return;
       }
-
-      // Demo login - accept any credentials
       setLoading(true);
-      setTimeout(() => {
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('userEmail', formData.email);
-        setMessage('✅ Login successful!');
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 500);
-      }, 1000);
-
+      try {
+        await login(formData.email, formData.password);
+        setSuccess('Login successful! Redirecting...');
+        setTimeout(() => navigate('/dashboard'), 1000);
+      } catch (err) {
+        setError(err.response?.data?.detail || 'Invalid email or password');
+      } finally {
+        setLoading(false);
+      }
     } else {
-      // Signup validation
       if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
-        setMessage('❌ Please fill all fields');
+        setError('Please fill in all mandatory fields');
         return;
       }
-
       if (formData.password !== formData.confirmPassword) {
-        setMessage('❌ Passwords do not match');
+        setError('Passwords do not match');
         return;
       }
-
       if (formData.password.length < 6) {
-        setMessage('❌ Password must be at least 6 characters');
+        setError('Password must be at least 6 characters');
         return;
       }
-
-      // Demo signup
       setLoading(true);
-      setTimeout(() => {
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('userEmail', formData.email);
-        localStorage.setItem('userName', formData.name);
-        setMessage('✅ Signup successful!');
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 500);
-      }, 1000);
+      try {
+        await registerUser(formData.name, formData.email, formData.password, formData.role);
+        setSuccess('Registration successful! You can now log in.');
+        setIsLogin(true);
+        setFormData({
+          email: formData.email,
+          password: '',
+          name: '',
+          confirmPassword: '',
+          role: 'viewer'
+        });
+      } catch (err) {
+        setError(err.response?.data?.detail || 'Registration failed');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
   const toggleMode = () => {
     setIsLogin(!isLogin);
-    setMessage('');
-    setFormData({
-      email: '',
-      password: '',
-      name: '',
-      confirmPassword: ''
-    });
+    setError('');
+    setSuccess('');
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-background">
-        <div className="auth-card">
-          <div className="auth-header">
-            <h1>🚦 Smart Traffic Management</h1>
-            <p>{isLogin ? 'Login to your account' : 'Create a new account'}</p>
-          </div>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)',
+        p: 2
+      }}
+    >
+      <Card sx={{ maxWidth: 450, width: '100%', borderRadius: 4, boxShadow: 24, bgcolor: 'background.paper', backgroundImage: 'none' }}>
+        <CardContent sx={{ p: 4 }}>
+          <Stack spacing={2} alignItems="center" sx={{ mb: 4 }}>
+            <Box sx={{ bgcolor: 'primary.main', borderRadius: 3, p: 1.5, display: 'inline-flex', color: '#fff', boxShadow: '0 0 20px 0 rgba(99,102,241,0.5)' }}>
+              <TrafficIcon fontSize="large" />
+            </Box>
+            <Typography variant="h4" sx={{ fontWeight: 800, textAlign: 'center', color: 'text.primary' }}>
+              Smart Traffic AI
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {isLogin ? 'Login to access the monitoring portal' : 'Create an operator or viewer account'}
+            </Typography>
+          </Stack>
 
-          <form onSubmit={handleSubmit} className="auth-form">
-            {!isLogin && (
-              <div className="form-group">
-                <label className="form-label">Full Name</label>
-                <input
-                  type="text"
+          <Box component="form" onSubmit={handleSubmit}>
+            <Stack spacing={2.5}>
+              {error && <Alert severity="error">{error}</Alert>}
+              {success && <Alert severity="success">{success}</Alert>}
+
+              {!isLogin && (
+                <TextField
+                  label="Full Name"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  placeholder="Enter your full name"
-                  className="form-input"
+                  fullWidth
+                  required
                   disabled={loading}
                 />
-              </div>
-            )}
+              )}
 
-            <div className="form-group">
-              <label className="form-label">Email Address</label>
-              <input
-                type="email"
+              <TextField
+                label="Email Address"
                 name="email"
+                type="email"
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="Enter your email"
-                className="form-input"
+                fullWidth
+                required
                 disabled={loading}
               />
-            </div>
 
-            <div className="form-group">
-              <label className="form-label">Password</label>
-              <input
-                type="password"
+              <TextField
+                label="Password"
                 name="password"
+                type="password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="Enter your password"
-                className="form-input"
+                fullWidth
+                required
                 disabled={loading}
               />
-            </div>
 
-            {!isLogin && (
-              <div className="form-group">
-                <label className="form-label">Confirm Password</label>
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  placeholder="Confirm your password"
-                  className="form-input"
-                  disabled={loading}
-                />
-              </div>
-            )}
+              {!isLogin && (
+                <>
+                  <TextField
+                    label="Confirm Password"
+                    name="confirmPassword"
+                    type="password"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    fullWidth
+                    required
+                    disabled={loading}
+                  />
+                  <TextField
+                    select
+                    label="Account Access Role"
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    fullWidth
+                    disabled={loading}
+                  >
+                    <MenuItem value="viewer">Public Viewer</MenuItem>
+                    <MenuItem value="traffic_officer">Traffic Enforcement Officer</MenuItem>
+                    <MenuItem value="admin">System Administrator</MenuItem>
+                  </TextField>
+                </>
+              )}
 
-            {message && (
-              <div className={`auth-message ${message.includes('❌') ? 'error' : 'success'}`}>
-                {message}
-              </div>
-            )}
+              <Button
+                type="submit"
+                variant="contained"
+                size="large"
+                fullWidth
+                disabled={loading}
+                sx={{
+                  py: 1.5,
+                  fontWeight: 700,
+                  textTransform: 'none',
+                  fontSize: 16,
+                  boxShadow: '0 4px 15px 0 rgba(99,102,241,0.4)',
+                }}
+              >
+                {loading ? 'Please wait...' : isLogin ? 'Sign In' : 'Create Account'}
+              </Button>
+            </Stack>
+          </Box>
 
-            <button type="submit" className="auth-button" disabled={loading}>
-              {loading ? 'Please wait...' : (isLogin ? 'Login' : 'Sign Up')}
-            </button>
-          </form>
-
-          <div className="auth-toggle">
-            <p>
+          <Box sx={{ mt: 3.5, textAlign: 'center' }}>
+            <Typography variant="body2" color="text.secondary">
               {isLogin ? "Don't have an account? " : "Already have an account? "}
-              <span onClick={toggleMode} className="toggle-link">
-                {isLogin ? 'Sign Up' : 'Login'}
-              </span>
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
+              <Button
+                onClick={toggleMode}
+                sx={{ fontWeight: 700, textTransform: 'none', p: 0, minWidth: 'auto', ml: 0.5 }}
+              >
+                {isLogin ? 'Register Here' : 'Log In Here'}
+              </Button>
+            </Typography>
+          </Box>
+        </CardContent>
+      </Card>
+    </Box>
   );
 }
-
-export default Login;

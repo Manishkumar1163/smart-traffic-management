@@ -4,11 +4,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from backend.config.settings import settings
-from backend.routes.auth import router as auth_router, ensure_default_admin
+from backend.routes.auth import router as auth_router
 from backend.routes.violations import router as violations_router
 from backend.routes.live import router as live_router
 from backend.routes.videos import router as videos_router
 from backend.routes.stats import router as stats_router
+from backend.routes.drivers import router as drivers_router
+from backend.routes.payments import router as payments_router
+from backend.database.seeder import seed_database
 
 # Setup logging
 logging.basicConfig(
@@ -43,13 +46,15 @@ app.include_router(violations_router)
 app.include_router(live_router)
 app.include_router(videos_router)
 app.include_router(stats_router)
+app.include_router(drivers_router)
+app.include_router(payments_router)
 
 @app.on_event("startup")
 async def startup_event():
     log.info("🚦 Smart Traffic AI System Starting Up...")
-    # Seed default admin user if not present
-    await ensure_default_admin()
-    log.info("✅ Database seeded with default admin credentials (admin@traffic.com / admin123).")
+    # Seed default admin user and driver/vehicle database records
+    await seed_database()
+    log.info("✅ Database seeded with default credentials and driver profiles.")
 
 @app.get("/")
 async def root():

@@ -23,6 +23,7 @@ def ocr_plate(frame, x, y, w, h):
     """
     Enhanced License Plate Recognition with Image Processing & Tesseract Fallback.
     Saves the cropped plate image for auditability.
+    Returns: (plate_text, crop_name)
     """
     # Crop with margin
     h_f, w_f = frame.shape[:2]
@@ -31,8 +32,9 @@ def ocr_plate(frame, x, y, w, h):
     roi = frame[y1:y2, x1:x2]
     
     if roi.size == 0:
-        return None
+        return None, None
         
+    crop_name = None
     try:
         # Save cropped license plate
         import uuid
@@ -66,7 +68,7 @@ def ocr_plate(frame, x, y, w, h):
             res = reader.readtext(thresh, detail=0)
             text = ''.join(filter(str.isalnum, ' '.join(res))).upper()
             if len(text) >= 4:
-                return text[:12]
+                return text[:12], crop_name
         except Exception as e:
             log.debug(f"EasyOCR failed: {e}")
 
@@ -76,8 +78,8 @@ def ocr_plate(frame, x, y, w, h):
         t = pytesseract.image_to_string(thresh, config=config).strip().upper()
         clean_text = ''.join(filter(str.isalnum, t))
         if len(clean_text) >= 4:
-            return clean_text[:12]
+            return clean_text[:12], crop_name
     except Exception as e:
         log.debug(f"Tesseract fallback failed: {e}")
 
-    return text if text else None
+    return (text if text else None), crop_name

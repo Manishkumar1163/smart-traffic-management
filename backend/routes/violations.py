@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, status, Query
 from fastapi.responses import FileResponse
 from typing import List, Optional
 from datetime import datetime
+from pathlib import Path
 from bson import ObjectId
 from backend.models.schemas import ViolationCreate
 from backend.database.connection import db
@@ -27,24 +28,40 @@ async def get_violations(
     if type_filter and type_filter.upper() != "ALL":
         query["type"] = type_filter.lower()
     if search:
-        query["plate"] = {"$regex": search, "$options": "i"}
+        query["$or"] = [
+            {"plate": {"$regex": search, "$options": "i"}},
+            {"type": {"$regex": search, "$options": "i"}},
+            {"location": {"$regex": search, "$options": "i"}}
+        ]
         
     data = []
     async for v in db.violations.find(query).sort("time", -1).limit(100):
         v["_id"] = str(v["_id"])
+        
+        # Dynamic driver name lookup
+        driver = await db.drivers.find_one({"license_plate": v.get("plate", "").upper()})
+        v["driver_name"] = driver.get("name") if driver else "Unregistered"
+        
+        # Compatibility schema mappings
+        v["license_plate"] = v.get("plate", "")
+        v["violation_type"] = v.get("type", "unknown")
+        v["fine_amount"] = v.get("fine", 0)
+        v["timestamp"] = v.get("time", "")
+        v["payment_status"] = v.get("status", "pending")
+        
         data.append(v)
-    return data
+    return {"violations": data}
 
 @router.post("/create")
 async def create_violation_from_video(data: ViolationCreate):
-    fine_map = {"no_helmet": 500, "speeding": 2000, "triple_riding": 1500, "no_seatbelt": 1000, "red_light": 1000}
+    fine_map = {"no_helmet": 500, "speeding": 2000, "triple_riding": 1500, "no_seatbelt": 1000, "red_light": 1000, "wrong_lane": 500, "wrong_direction": 1500, "illegal_parking": 1000}
     fine = fine_map.get(data.violation_type, 1000)
     
     doc = {
-        "plate": data.license_plate,
+        "plate": data.license_plate.upper(),
         "type": data.violation_type,
         "fine": fine,
-        "time": data.timestamp,
+        "time": data.timestamp if data.timestamp else datetime.now().isoformat(),
         "status": "pending",
         "location": data.location,
         "source": "video_upload",
@@ -118,7 +135,6 @@ async def download_report(
     format_type: str = "pdf"
 ):
     """Generates daily/weekly/monthly report in PDF or CSV formats."""
-    # Fetch active violations
     violations_list = []
     async for v in db.violations.find().sort("time", -1).limit(500):
         v["_id"] = str(v["_id"])
@@ -130,3 +146,49 @@ async def download_report(
     else:
         file_path = generate_report_csv(violations_list, report_type)
         return FileResponse(file_path, filename=f"report_{report_type}.csv", media_type="text/csv")
+
+@router.get("/driver/{plate}")
+async def get_driver_violations(plate: str):
+    """Fetch history of violations for a particular license plate."""
+    data = []
+    async for v in db.violations.find({"plate": plate.upper()}).sort("time", -1):
+        v["_id"] = str(v["_id"])
+        
+        # Compatibility schema mappings
+        v["license_plate"] = v.get("plate", "")
+        v["violation_type"] = v.get("type", "unknown")
+        v["fine_amount"] = v.get("fine", 0)
+        v["timestamp"] = v.get("time", "")
+        v["payment_status"] = v.get("status", "pending")
+        
+        data.append(v)
+    return {"violations": data}
+
+@router.put("/{violation_id}/waive")
+async def waive_violation(
+    violation_id: str,
+    user: dict = Depends(RoleChecker(["admin", "traffic_officer"]))
+):
+    """Admin/Officer: Waive fine for a violation (set to 0 and mark as paid)."""
+    try:
+        oid = ObjectId(violation_id)
+    except Exception:
+        raise HTTPException(400, "Invalid violation ID")
+        
+    result = await db.violations.update_one(
+        {"_id": oid},
+        {"$set": {
+            "fine": 0,
+            "status": "paid",
+            "waived_at": datetime.now().isoformat(),
+            "waived_by": user.get("name", "Officer")
+        }}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(404, "Violation not found")
+        
+    # Trigger settlement email receipt
+    v = await db.violations.find_one({"_id": oid})
+    await send_settlement_email_async(v.get("type", "unknown"), v.get("plate", "UNK"), 0)
+    
+    return {"status": "success", "message": "Violation waived successfully"}

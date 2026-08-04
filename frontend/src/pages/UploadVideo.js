@@ -1,367 +1,54 @@
-﻿// import React, { useState } from 'react';
-// import axios from 'axios';
-// import './UploadVideo.css';
-
-// const API_URL = 'http://localhost:8000/api';
-
-// function UploadVideo() {
-//   const [file, setFile] = useState(null);
-//   const [location, setLocation] = useState('');
-//   const [uploading, setUploading] = useState(false);
-//   const [message, setMessage] = useState('');
-//   const [progress, setProgress] = useState(0);
-
-//   const handleFileChange = (e) => {
-//     const selectedFile = e.target.files[0];
-//     if (selectedFile) {
-//       const validTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/mkv'];
-//       if (!validTypes.includes(selectedFile.type) && !selectedFile.name.match(/\.(mp4|avi|mov|mkv)$/i)) {
-//         setMessage('Please select a valid video file (MP4, AVI, MOV, MKV)');
-//         return;
-//       }
-      
-//       if (selectedFile.size > 500 * 1024 * 1024) {
-//         setMessage('File size should not exceed 500MB');
-//         return;
-//       }
-      
-//       setFile(selectedFile);
-//       setMessage('');
-//     }
-//   };
-
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-    
-//     if (!file) {
-//       setMessage('Please select a video file');
-//       return;
-//     }
-    
-//     if (!location.trim()) {
-//       setMessage('Please enter location');
-//       return;
-//     }
-
-//     setUploading(true);
-//     setMessage('');
-//     setProgress(0);
-
-//     const formData = new FormData();
-//     formData.append('file', file);
-//     formData.append('location', location);
-
-//     try {
-//       const response = await axios.post(`${API_URL}/videos/upload`, formData, {
-//         headers: {
-//           'Content-Type': 'multipart/form-data',
-//         },
-//         onUploadProgress: (progressEvent) => {
-//           const percentCompleted = Math.round(
-//             (progressEvent.loaded * 100) / progressEvent.total
-//           );
-//           setProgress(percentCompleted);
-//         },
-//       });
-
-//       setMessage(`✅ ${response.data.message}. Video is being processed...`);
-//       setFile(null);
-//       setLocation('');
-//       setProgress(0);
-      
-//       document.getElementById('video-file-input').value = '';
-//     } catch (error) {
-//       setMessage(`❌ Error: ${error.response?.data?.detail || error.message}`);
-//       setProgress(0);
-//     } finally {
-//       setUploading(false);
-//     }
-//   };
-
-//   return (
-//     <div className="upload-container">
-//       <h1 className="page-title">Upload Traffic Video</h1>
-      
-//       <div className="upload-card">
-//         <form onSubmit={handleSubmit} className="upload-form">
-//           <div className="form-group">
-//             <label htmlFor="video-file-input" className="form-label">
-//               Select Video File
-//             </label>
-//             <input
-//               type="file"
-//               id="video-file-input"
-//               accept="video/*"
-//               onChange={handleFileChange}
-//               className="file-input"
-//               disabled={uploading}
-//             />
-//             {file && (
-//               <div className="file-info">
-//                 <span>📹 {file.name}</span>
-//                 <span className="file-size">
-//                   ({(file.size / (1024 * 1024)).toFixed(2)} MB)
-//                 </span>
-//               </div>
-//             )}
-//           </div>
-
-//           <div className="form-group">
-//             <label htmlFor="location-input" className="form-label">
-//               Location
-//             </label>
-//             <input
-//               type="text"
-//               id="location-input"
-//               value={location}
-//               onChange={(e) => setLocation(e.target.value)}
-//               placeholder="e.g., Main Street Junction, City Center"
-//               className="text-input"
-//               disabled={uploading}
-//             />
-//           </div>
-
-//           {progress > 0 && progress < 100 && (
-//             <div className="progress-container">
-//               <div className="progress-bar">
-//                 <div 
-//                   className="progress-fill" 
-//                   style={{ width: `${progress}%` }}
-//                 >
-//                   {progress}%
-//                 </div>
-//               </div>
-//             </div>
-//           )}
-
-//           {message && (
-//             <div className={`message ${message.includes('❌') ? 'error' : 'success'}`}>
-//               {message}
-//             </div>
-//           )}
-
-//           <button 
-//             type="submit" 
-//             className="submit-btn"
-//             disabled={uploading || !file || !location.trim()}
-//           >
-//             {uploading ? 'Uploading...' : 'Upload and Process Video'}
-//           </button>
-//         </form>
-
-//         <div className="upload-instructions">
-//           <h3>📋 Instructions</h3>
-//           <ul>
-//             <li>Supported formats: MP4, AVI, MOV, MKV</li>
-//             <li>Maximum file size: 500MB</li>
-//             <li>Video should have clear view of license plates</li>
-//             <li>Processing time depends on video length</li>
-//             <li>You'll receive notifications once processing is complete</li>
-//           </ul>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
-// export default UploadVideo;
-
-
-
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Stack from '@mui/material/Stack';
+import LinearProgress from '@mui/material/LinearProgress';
+import Alert from '@mui/material/Alert';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import { useNavigate } from 'react-router-dom';
-import './UploadVideo.css';
 
-const API_URL = 'http://localhost:8000/api';
+import api from '../services/api';
 
-function UploadVideo() {
+export default function UploadVideo() {
   const navigate = useNavigate();
   const [file, setFile] = useState(null);
   const [location, setLocation] = useState('');
   const [uploading, setUploading] = useState(false);
-  const [message, setMessage] = useState('');
   const [progress, setProgress] = useState(0);
-  const [processingVideos, setProcessingVideos] = useState([]);
-
-  // Load processing videos from localStorage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem('processingVideos');
-    if (saved) {
-      const videos = JSON.parse(saved);
-      setProcessingVideos(videos);
-      
-      // Resume polling for each video
-      videos.forEach(video => {
-        if (video.status === 'processing') {
-          pollForDetections(video.id, video.location, video.filename);
-        }
-      });
-    }
-  }, []);
-
-  // Save processing videos to localStorage whenever it changes
-  useEffect(() => {
-    if (processingVideos.length > 0) {
-      localStorage.setItem('processingVideos', JSON.stringify(processingVideos));
-    }
-  }, [processingVideos]);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
       const validTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/mkv'];
       if (!validTypes.includes(selectedFile.type) && !selectedFile.name.match(/\.(mp4|avi|mov|mkv)$/i)) {
-        setMessage('Please select a valid video file (MP4, AVI, MOV, MKV)');
+        setError('Please select a valid video file (MP4, AVI, MOV, MKV).');
+        setFile(null);
         return;
       }
-      
       if (selectedFile.size > 500 * 1024 * 1024) {
-        setMessage('File size should not exceed 500MB');
+        setError('File size exceeds the 500MB university project upload limit.');
+        setFile(null);
         return;
       }
-      
       setFile(selectedFile);
+      setError('');
       setMessage('');
-    }
-  };
-
-  const updateProcessingVideo = (videoId, updates) => {
-    setProcessingVideos(prev => 
-      prev.map(video => 
-        video.id === videoId ? { ...video, ...updates } : video
-      )
-    );
-  };
-
-  const removeProcessingVideo = (videoId) => {
-    setProcessingVideos(prev => prev.filter(video => video.id !== videoId));
-    
-    // Clean up localStorage
-    const remaining = processingVideos.filter(video => video.id !== videoId);
-    if (remaining.length === 0) {
-      localStorage.removeItem('processingVideos');
-    }
-  };
-
-  // Poll for detections after video upload
-  const pollForDetections = async (videoId, videoLocation, filename) => {
-    let attempts = 0;
-    const maxAttempts = 60; // Poll for up to 5 minutes
-    
-    const poll = async () => {
-      try {
-        attempts++;
-        console.log(`Polling attempt ${attempts} for video ${videoId}...`);
-        
-        updateProcessingVideo(videoId, {
-          attempts: attempts,
-          lastChecked: new Date().toLocaleTimeString()
-        });
-        
-        const response = await axios.get(`${API_URL}/videos/${videoId}/detections`);
-        
-        if (response.data && response.data.length > 0) {
-          // Detections found!
-          console.log('Detections found:', response.data);
-          
-          updateProcessingVideo(videoId, {
-            status: 'completed',
-            detections: response.data,
-            detectionsCount: response.data.length
-          });
-          
-          // Create violations from detections
-          await createViolationsFromDetections(response.data, videoLocation);
-          
-          // Show success message
-          setMessage(`✅ Processing complete for "${filename}"! Found ${response.data.length} violation(s).`);
-          
-          // Remove from processing after 10 seconds
-          setTimeout(() => {
-            removeProcessingVideo(videoId);
-          }, 10000);
-          
-          return;
-        }
-        
-        // No detections yet, continue polling
-        if (attempts < maxAttempts) {
-          setTimeout(poll, 5000); // Poll every 5 seconds
-        } else {
-          updateProcessingVideo(videoId, {
-            status: 'no_violations',
-            message: 'No violations detected'
-          });
-          
-          setMessage(`⚠️ Processing complete for "${filename}" but no violations detected.`);
-          
-          // Remove from processing after 10 seconds
-          setTimeout(() => {
-            removeProcessingVideo(videoId);
-          }, 10000);
-        }
-      } catch (error) {
-        console.error('Error polling for detections:', error);
-        
-        if (attempts < maxAttempts) {
-          updateProcessingVideo(videoId, {
-            status: 'processing',
-            error: error.message
-          });
-          setTimeout(poll, 5000); // Continue polling even on error
-        } else {
-          updateProcessingVideo(videoId, {
-            status: 'error',
-            message: 'Error processing video'
-          });
-          
-          setMessage(`❌ Error processing "${filename}". Please check the Violations page later.`);
-          
-          // Remove from processing after 10 seconds
-          setTimeout(() => {
-            removeProcessingVideo(videoId);
-          }, 10000);
-        }
-      }
-    };
-    
-    poll();
-  };
-
-  // Create violations from detections
-  const createViolationsFromDetections = async (detections, videoLocation) => {
-    try {
-      for (const detection of detections) {
-        await axios.post(`${API_URL}/violations/create`, {
-          video_id: detection.video_id,
-          license_plate: detection.license_plate,
-          violation_type: detection.violation_type,
-          timestamp: detection.timestamp,
-          location: videoLocation,
-          confidence_score: detection.confidence_score
-        });
-      }
-      console.log('Violations created successfully');
-    } catch (error) {
-      console.error('Error creating violations:', error);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!file) {
-      setMessage('Please select a video file');
-      return;
-    }
-    
-    if (!location.trim()) {
-      setMessage('Please enter location');
-      return;
-    }
+    if (!file) return setError('Please select a traffic video file.');
+    if (!location.trim()) return setError('Please specify the camera junction location.');
 
     setUploading(true);
+    setError('');
     setMessage('');
     setProgress(0);
 
@@ -370,10 +57,8 @@ function UploadVideo() {
     formData.append('location', location);
 
     try {
-      const response = await axios.post(`${API_URL}/videos/upload`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      const response = await api.post('/api/videos/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
         onUploadProgress: (progressEvent) => {
           const percentCompleted = Math.round(
             (progressEvent.loaded * 100) / progressEvent.total
@@ -382,166 +67,116 @@ function UploadVideo() {
         },
       });
 
-      setUploading(false);
-      setMessage(`✅ Video uploaded successfully! Processing "${file.name}"...`);
-      
-      // Get video ID from response (you may need to adjust based on your API response)
-      const uploadedVideoId = response.data.video_id || response.data.id || `video_${Date.now()}`;
-      
-      // Add to processing videos
-      const newProcessingVideo = {
-        id: uploadedVideoId,
-        filename: file.name,
-        location: location,
-        status: 'processing',
-        uploadedAt: new Date().toLocaleTimeString(),
-        attempts: 0,
-        lastChecked: new Date().toLocaleTimeString()
-      };
-      
-      setProcessingVideos(prev => [...prev, newProcessingVideo]);
-      
-      // Start polling for detections
-      pollForDetections(uploadedVideoId, location, file.name);
-      
+      setMessage(`🎉 Video "${file.name}" uploaded successfully! Server is running YOLOv8 & OCR detection in the background.`);
       setFile(null);
       setLocation('');
       setProgress(0);
       
-      document.getElementById('video-file-input').value = '';
-    } catch (error) {
-      setMessage(`❌ Error: ${error.response?.data?.detail || error.message}`);
+      // Redirect to the video tracking page after a brief delay
+      setTimeout(() => {
+        navigate('/videos');
+      }, 1500);
+      
+    } catch (err) {
+      setError(err.response?.data?.detail || err.message || 'Failed to upload video.');
       setProgress(0);
+    } finally {
       setUploading(false);
     }
   };
 
   return (
-    <div className="upload-container">
-      <h1 className="page-title">Upload Traffic Video</h1>
+    <Box sx={{ maxWidth: 800, mx: 'auto' }}>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" sx={{ fontWeight: 800, tracking: -0.5 }}>
+          📹 Upload Traffic Video for Offline Audit
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Upload pre-recorded traffic camera videos to run batch YOLOv8 vehicle counting, helmet check, and OCR challan logs
+        </Typography>
+      </Box>
+
+      {message && <Alert severity="success" sx={{ mb: 3 }}>{message}</Alert>}
+      {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
+
+      <Card sx={{ borderRadius: 3, boxShadow: 2, backgroundImage: 'none' }}>
+        <CardContent sx={{ p: 4 }}>
+          <Box component="form" onSubmit={handleSubmit}>
+            <Stack spacing={4}>
+              <Box
+                sx={{
+                  border: '2px dashed',
+                  borderColor: file ? 'primary.main' : 'divider',
+                  borderRadius: 3,
+                  p: 4,
+                  bgcolor: 'action.hover',
+                  cursor: 'pointer',
+                  textAlign: 'center',
+                  '&:hover': { bgcolor: 'action.selected' },
+                  position: 'relative'
+                }}
+                component="label"
+              >
+                <input
+                  type="file"
+                  accept="video/*"
+                  onChange={handleFileChange}
+                  style={{ display: 'none' }}
+                  disabled={uploading}
+                />
+                <CloudUploadIcon color="primary" sx={{ fontSize: 48, mb: 1 }} />
+                <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                  {file ? file.name : 'Select or Drag Traffic Video File'}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                  {file ? `${(file.size / (1024 * 1024)).toFixed(2)} MB` : 'Supported formats: MP4, AVI, MOV, MKV (Max 500MB)'}
+                </Typography>
+              </Box>
+
+              <TextField
+                label="Junction Location"
+                placeholder="e.g. Main Street Bypass Road, Crossing-4"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                fullWidth
+                required
+                disabled={uploading}
+              />
+
+              {uploading && (
+                <Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                    <Typography variant="body2" color="text.secondary">Uploading video file...</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 700 }}>{progress}%</Typography>
+                  </Box>
+                  <LinearProgress variant="determinate" value={progress} sx={{ height: 6, borderRadius: 2 }} />
+                </Box>
+              )}
+
+              <Button
+                type="submit"
+                variant="contained"
+                size="large"
+                disabled={uploading || !file || !location.trim()}
+                sx={{ py: 1.5, fontWeight: 700, textTransform: 'none' }}
+              >
+                {uploading ? 'Uploading Video...' : 'Upload and Queue AI Processing'}
+              </Button>
+            </Stack>
+          </Box>
+        </CardContent>
+      </Card>
       
-      {/* Processing Videos Section */}
-      {processingVideos.length > 0 && (
-        <div className="processing-videos-section">
-          <h2>🔄 Processing Videos ({processingVideos.length})</h2>
-          <div className="processing-videos-list">
-            {processingVideos.map((video) => (
-              <div key={video.id} className={`processing-video-card ${video.status}`}>
-                <div className="video-header">
-                  <span className="video-filename">📹 {video.filename}</span>
-                  <span className={`video-status-badge ${video.status}`}>
-                    {video.status === 'processing' && '⏳ Processing'}
-                    {video.status === 'completed' && '✅ Completed'}
-                    {video.status === 'no_violations' && '⚠️ No Violations'}
-                    {video.status === 'error' && '❌ Error'}
-                  </span>
-                </div>
-                
-                <div className="video-details">
-                  <p>📍 Location: {video.location}</p>
-                  <p>🕐 Uploaded: {video.uploadedAt}</p>
-                  {video.status === 'processing' && (
-                    <>
-                      <p>🔍 Checking... (Attempt {video.attempts}/60)</p>
-                      <p>⏱️ Last checked: {video.lastChecked}</p>
-                      <div className="processing-spinner"></div>
-                    </>
-                  )}
-                  {video.status === 'completed' && (
-                    <p className="detections-found">
-                      🚨 Found {video.detectionsCount} violation(s)!
-                    </p>
-                  )}
-                  {video.message && (
-                    <p className="status-message">{video.message}</p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-      
-      <div className="upload-card">
-        <form onSubmit={handleSubmit} className="upload-form">
-          <div className="form-group">
-            <label htmlFor="video-file-input" className="form-label">
-              Select Video File
-            </label>
-            <input
-              type="file"
-              id="video-file-input"
-              accept="video/*"
-              onChange={handleFileChange}
-              className="file-input"
-              disabled={uploading}
-            />
-            {file && (
-              <div className="file-info">
-                <span>📹 {file.name}</span>
-                <span className="file-size">
-                  ({(file.size / (1024 * 1024)).toFixed(2)} MB)
-                </span>
-              </div>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="location-input" className="form-label">
-              Location
-            </label>
-            <input
-              type="text"
-              id="location-input"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="e.g., Main Street Junction, City Center"
-              className="text-input"
-              disabled={uploading}
-            />
-          </div>
-
-          {progress > 0 && progress < 100 && (
-            <div className="progress-container">
-              <div className="progress-bar">
-                <div 
-                  className="progress-fill" 
-                  style={{ width: `${progress}%` }}
-                >
-                  {progress}%
-                </div>
-              </div>
-            </div>
-          )}
-
-          {message && (
-            <div className={`message ${message.includes('❌') ? 'error' : 'success'}`}>
-              {message}
-            </div>
-          )}
-
-          <button 
-            type="submit" 
-            className="submit-btn"
-            disabled={uploading || !file || !location.trim()}
-          >
-            {uploading ? 'Uploading...' : 'Upload and Process Video'}
-          </button>
-        </form>
-
-        <div className="upload-instructions">
-          <h3>📋 Instructions</h3>
-          <ul>
-            <li>Supported formats: MP4, AVI, MOV, MKV</li>
-            <li>Maximum file size: 500MB</li>
-            <li>Video should have clear view of license plates</li>
-            <li>Processing time depends on video length</li>
-            <li>Track processing status in the section above</li>
-          </ul>
-        </div>
-      </div>
-    </div>
+      <Card sx={{ borderRadius: 3, mt: 4, bgcolor: 'background.paper' }}>
+        <CardContent sx={{ p: 3 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+            📋 University Presentation Tip
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13 }}>
+            Uploading a video triggers the backend service thread (`cv.py::_process_video_sync`). The AI scans the video frames, runs plate tracking, identifies helmetless riders or speed violators, extracts plates, saves crops, and auto-records tickets in the database. You do not need to keep this tab open after the upload finishes!
+          </Typography>
+        </CardContent>
+      </Card>
+    </Box>
   );
 }
-
-export default UploadVideo;

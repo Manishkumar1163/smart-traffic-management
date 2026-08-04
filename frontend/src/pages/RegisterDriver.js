@@ -1,33 +1,33 @@
-﻿// ⚠️ PASTE COMPLETE RegisterDriver.JS CODE FROM CLAUDE HERE
-// import React from 'react';
-// import './RegisterDriver.css';
-// function RegisterDriver() {
-//   return (
-//     <div className="-container">
-//       <h1>RegisterDriver Page</h1>
-//       <p>Replace this with complete code from Claude's artifact</p>
-//     </div>
-//   );
-// }
-// export default RegisterDriver;
-
-
 import React, { useState } from 'react';
-import axios from 'axios';
-import './RegisterDriver.css';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Stack from '@mui/material/Stack';
+import Grid from '@mui/material/Grid';
+import Alert from '@mui/material/Alert';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
 
-const API_URL = 'http://localhost:8000/api';
+import api from '../services/api';
 
-function RegisterDriver() {
+export default function RegisterDriver() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
     license_plate: '',
-    address: ''
+    license_number: '',
+    address: '',
+    rc_number: '',
+    insurance_number: '',
+    insurance_expiry: ''
   });
+  
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     setFormData({
@@ -38,166 +38,205 @@ function RegisterDriver() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validation
-    if (!formData.name.trim()) {
-      setMessage('❌ Please enter driver name');
-      return;
-    }
-    if (!formData.email.trim() || !formData.email.includes('@')) {
-      setMessage('❌ Please enter a valid email address');
-      return;
-    }
-    if (!formData.phone.trim() || formData.phone.length < 10) {
-      setMessage('❌ Please enter a valid phone number');
-      return;
-    }
-    if (!formData.license_plate.trim()) {
-      setMessage('❌ Please enter license plate number');
-      return;
-    }
-    if (!formData.address.trim()) {
-      setMessage('❌ Please enter address');
-      return;
-    }
+    setMessage('');
+    setError('');
+
+    // Input Validation
+    if (!formData.name.trim()) return setError('Please enter the driver full name.');
+    if (!formData.email.trim() || !formData.email.includes('@')) return setError('Please enter a valid email address.');
+    if (!formData.phone.trim() || formData.phone.length < 10) return setError('Please enter a valid 10-digit phone number.');
+    if (!formData.license_plate.trim()) return setError('Please specify the vehicle license plate.');
+    if (!formData.license_number.trim()) return setError('Please specify the driver license number.');
+    if (!formData.address.trim()) return setError('Please enter the permanent address.');
 
     setLoading(true);
-    setMessage('');
+
+    // Capitalize license plates and numbers
+    const payload = {
+      ...formData,
+      license_plate: formData.license_plate.toUpperCase().replace(/\s+/g, ''),
+      license_number: formData.license_number.toUpperCase().replace(/\s+/g, ''),
+      rc_number: formData.rc_number ? formData.rc_number.toUpperCase().replace(/\s+/g, '') : undefined,
+      insurance_expiry: formData.insurance_expiry ? new Date(formData.insurance_expiry).isoformat : undefined
+    };
 
     try {
-      const response = await axios.post(`${API_URL}/drivers/register`, formData);
-      setMessage(`✅ ${response.data.message}`);
+      const res = await api.post('/api/drivers/register', payload);
+      setMessage(`✅ ${res.data.message}`);
       
-      // Reset form
+      // Reset form on success
       setFormData({
         name: '',
         email: '',
         phone: '',
         license_plate: '',
-        address: ''
+        license_number: '',
+        address: '',
+        rc_number: '',
+        insurance_number: '',
+        insurance_expiry: ''
       });
-    } catch (error) {
-      setMessage(`❌ Error: ${error.response?.data?.detail || error.message}`);
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Failed to register driver. Vehicle plate might already exist.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="register-container">
-      <h1 className="page-title">Register New Driver</h1>
+    <Box sx={{ maxWidth: 900, mx: 'auto' }}>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" sx={{ fontWeight: 800, tracking: -0.5 }}>
+          👤 Register Driver & Vehicle
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Add new driver profiles mapped to vehicle license plates for electronic challan notices
+        </Typography>
+      </Box>
 
-      <div className="register-card">
-        <form onSubmit={handleSubmit} className="register-form">
-          <div className="form-group">
-            <label htmlFor="name" className="form-label">
-              Full Name *
-            </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="Enter full name"
-              className="text-input"
-              disabled={loading}
-            />
-          </div>
+      {message && <Alert severity="success" sx={{ mb: 3 }}>{message}</Alert>}
+      {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
-          <div className="form-group">
-            <label htmlFor="email" className="form-label">
-              Email Address *
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="example@email.com"
-              className="text-input"
-              disabled={loading}
-            />
-          </div>
+      <Card sx={{ borderRadius: 3, boxShadow: 2, backgroundImage: 'none' }}>
+        <CardContent sx={{ p: 4 }}>
+          <Box component="form" onSubmit={handleSubmit}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 3, display: 'flex', alignItems: 'center', gap: 1, color: 'primary.main' }}>
+              <PersonAddIcon fontSize="small" />
+              Owner & Vehicle Details
+            </Typography>
+            
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Full Name *"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  fullWidth
+                  required
+                  disabled={loading}
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Email Address *"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  fullWidth
+                  required
+                  disabled={loading}
+                />
+              </Grid>
 
-          <div className="form-group">
-            <label htmlFor="phone" className="form-label">
-              Phone Number *
-            </label>
-            <input
-              type="tel"
-              id="phone"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              placeholder="Enter 10-digit phone number"
-              className="text-input"
-              disabled={loading}
-            />
-          </div>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Phone Number *"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  fullWidth
+                  required
+                  disabled={loading}
+                />
+              </Grid>
 
-          <div className="form-group">
-            <label htmlFor="license_plate" className="form-label">
-              License Plate Number *
-            </label>
-            <input
-              type="text"
-              id="license_plate"
-              name="license_plate"
-              value={formData.license_plate}
-              onChange={handleChange}
-              placeholder="e.g., MH12AB1234"
-              className="text-input"
-              style={{ textTransform: 'uppercase' }}
-              disabled={loading}
-            />
-          </div>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Driving License Number *"
+                  name="license_number"
+                  placeholder="e.g. DL-1234567890123"
+                  value={formData.license_number}
+                  onChange={handleChange}
+                  fullWidth
+                  required
+                  disabled={loading}
+                />
+              </Grid>
 
-          <div className="form-group">
-            <label htmlFor="address" className="form-label">
-              Address *
-            </label>
-            <textarea
-              id="address"
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              placeholder="Enter complete address"
-              className="textarea-input"
-              rows="4"
-              disabled={loading}
-            />
-          </div>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Vehicle License Plate *"
+                  name="license_plate"
+                  placeholder="e.g. MH12AB1234"
+                  value={formData.license_plate}
+                  onChange={handleChange}
+                  fullWidth
+                  required
+                  disabled={loading}
+                  inputProps={{ style: { textTransform: 'uppercase' } }}
+                />
+              </Grid>
 
-          {message && (
-            <div className={`message ${message.includes('❌') ? 'error' : 'success'}`}>
-              {message}
-            </div>
-          )}
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="RC Number (Optional)"
+                  name="rc_number"
+                  placeholder="e.g. RC-MH12AB1234"
+                  value={formData.rc_number}
+                  onChange={handleChange}
+                  fullWidth
+                  disabled={loading}
+                  inputProps={{ style: { textTransform: 'uppercase' } }}
+                />
+              </Grid>
 
-          <button 
-            type="submit" 
-            className="submit-btn"
-            disabled={loading}
-          >
-            {loading ? 'Registering...' : 'Register Driver'}
-          </button>
-        </form>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Insurance Number (Optional)"
+                  name="insurance_number"
+                  placeholder="e.g. INS-889911"
+                  value={formData.insurance_number}
+                  onChange={handleChange}
+                  fullWidth
+                  disabled={loading}
+                />
+              </Grid>
 
-        <div className="form-info">
-          <h3>ℹ️ Information</h3>
-          <ul>
-            <li>All fields marked with * are mandatory</li>
-            <li>Email will be used for violation notifications</li>
-            <li>Phone number should be 10 digits</li>
-            <li>License plate number should match vehicle registration</li>
-            <li>Ensure all details are accurate before submission</li>
-          </ul>
-        </div>
-      </div>
-    </div>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Insurance Expiry Date (Optional)"
+                  name="insurance_expiry"
+                  type="date"
+                  value={formData.insurance_expiry}
+                  onChange={handleChange}
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  disabled={loading}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <TextField
+                  label="Permanent Address *"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  fullWidth
+                  required
+                  multiline
+                  rows={3}
+                  disabled={loading}
+                />
+              </Grid>
+              
+              <Grid item xs={12} sx={{ mt: 2 }}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  size="large"
+                  disabled={loading}
+                  sx={{ py: 1.5, px: 4, fontWeight: 700, textTransform: 'none' }}
+                >
+                  {loading ? 'Registering Driver...' : 'Register Driver & Vehicle'}
+                </Button>
+              </Grid>
+            </Grid>
+          </Box>
+        </CardContent>
+      </Card>
+    </Box>
   );
 }
-
-export default RegisterDriver;

@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: traffic-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: traffic-backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGODB_URL=mongodb://mongodb:27017
+      - MONGODB_DB=traffic_ai
+      - SMTP_SENDER=mk9840508@gmail.com
+      - SMTP_PASSWORD=ycdimyduaeudaewh
+      - STRIPE_SECRET_KEY=
+    volumes:
+      - ./backend/uploads:/app/uploads
+      - ./backend/reports:/app/reports
+      - ./backend/logs:/app/logs
+    depends_on:
+      - mongodb
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: traffic-frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    stdin_open: true
+
+volumes:
+  mongo-data:

@@ -10,26 +10,41 @@ from backend.config.settings import settings
 
 log = logging.getLogger(__name__)
 
+from backend.database.connection import db
+
 async def send_email_async(vtype, plate, fine, img_path):
     """Sends violation alert email to driver's email address."""
-    def _send():
+    recipient = f"{plate.lower()}@example.com"
+    driver_name = "Owner"
+    try:
+        driver = await db.drivers.find_one({"license_plate": plate.upper()})
+        if driver:
+            if driver.get("email"):
+                recipient = driver["email"]
+            if driver.get("name"):
+                driver_name = driver["name"]
+            log.info(f"Resolved recipient email {recipient} and name {driver_name} for plate {plate}")
+    except Exception as e:
+        log.error(f"Failed to lookup driver email: {e}")
+
+    def _send(email_dest, name_dest):
         sender = settings.SMTP_SENDER
         pwd = settings.SMTP_PASSWORD
         if not pwd or not sender:
             log.warning("Email service not configured. Mocking email send.")
             return
         
-        recipient = f"{plate.lower()}@example.com"
         msg = MIMEMultipart()
         msg['From'] = sender
-        msg['To'] = recipient
+        msg['To'] = email_dest
         msg['Subject'] = f"Traffic Violation Notice: {vtype.replace('_', ' ').title()} ({plate})"
         
         body = (
-            f"Dear Owner of Vehicle {plate},\n\n"
+            f"Dear {name_dest},\n\n"
             f"A traffic violation has been detected by our AI Smart Traffic System.\n\n"
             f"Violation Details:\n"
             f"------------------\n"
+            f"Vehicle Plate: {plate}\n"
             f"Type: {vtype.replace('_', ' ').title()}\n"
             f"Fine: Rs. {fine}\n"
             f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
@@ -55,32 +70,44 @@ async def send_email_async(vtype, plate, fine, img_path):
             server.login(sender, pwd)
             server.send_message(msg)
             server.quit()
-            log.info(f"📧 Violation Alert email sent to {recipient}")
+            log.info(f"📧 Violation Alert email sent to {email_dest}")
         except Exception as e:
-            log.error(f"Failed to send email to {recipient}: {e}")
+            log.error(f"Failed to send email to {email_dest}: {e}")
 
-    await asyncio.to_thread(_send)
+    await asyncio.to_thread(_send, recipient, driver_name)
 
 async def send_settlement_email_async(vtype, plate, fine):
     """Sends payment receipt confirmation email."""
-    def _send():
+    recipient = f"{plate.lower()}@example.com"
+    driver_name = "Owner"
+    try:
+        driver = await db.drivers.find_one({"license_plate": plate.upper()})
+        if driver:
+            if driver.get("email"):
+                recipient = driver["email"]
+            if driver.get("name"):
+                driver_name = driver["name"]
+    except Exception as e:
+        log.error(f"Failed to lookup driver email: {e}")
+
+    def _send(email_dest, name_dest):
         sender = settings.SMTP_SENDER
         pwd = settings.SMTP_PASSWORD
         if not pwd or not sender:
             log.warning("Email service not configured. Mocking payment receipt email.")
             return
         
-        recipient = f"{plate.lower()}@example.com"
         msg = MIMEMultipart()
         msg['From'] = sender
-        msg['To'] = recipient
+        msg['To'] = email_dest
         msg['Subject'] = f"Payment Successful: Violation Case {plate}"
         
         body = (
-            f"Dear Owner of Vehicle {plate},\n\n"
-            f"This is a formal confirmation that the traffic violation penalty has been SETTLED.\n\n"
+            f"Dear {name_dest},\n\n"
+            f"This is a formal confirmation that your traffic violation penalty has been SETTLED.\n\n"
             f"Violation Details:\n"
             f"------------------\n"
+            f"Vehicle Plate: {plate}\n"
             f"Type: {vtype.replace('_', ' ').title()}\n"
             f"Penalty Amount: Rs. {fine}\n"
             f"Status: PAID & CLOSED\n\n"
@@ -95,8 +122,8 @@ async def send_settlement_email_async(vtype, plate, fine):
             server.login(sender, pwd)
             server.send_message(msg)
             server.quit()
-            log.info(f"🧾 Settlement Receipt sent to {recipient}")
+            log.info(f"🧾 Settlement Receipt sent to {email_dest}")
         except Exception as e:
             log.error(f"Failed to send settlement email: {e}")
 
-    await asyncio.to_thread(_send)
+    await asyncio.to_thread(_send, recipient, driver_name)

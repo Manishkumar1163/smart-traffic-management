@@ -3,10 +3,11 @@ import csv
 from datetime import datetime
 from pathlib import Path
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, Image
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from backend.config.settings import settings
+import qrcode
 
 def generate_challan_pdf(violation: dict) -> str:
     """Generates a professional PDF challan for a violation."""
@@ -83,22 +84,38 @@ def generate_challan_pdf(violation: dict) -> str:
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
     ]))
     story.append(details_table)
-    story.append(Spacer(1, 30))
+    story.append(Spacer(1, 20))
     
-    # QR Code placeholder
+    # Generate real QR Code image
+    qr_img_path = settings.SCREENSHOTS_DIR / f"qr_{violation.get('_id', 'UNK')}.png"
+    try:
+        qr = qrcode.QRCode(version=1, box_size=3, border=1)
+        # Point QR to payment page on frontend
+        payment_url = f"http://localhost:3000/pay/{violation.get('_id', 'UNK')}"
+        qr.add_data(payment_url)
+        qr.make(fit=True)
+        qr_img = qr.make_image(fill_color="black", back_color="white")
+        qr_img.save(str(qr_img_path))
+        qr_flowable = Image(str(qr_img_path), width=80, height=80)
+    except Exception as e:
+        log.error(f"Failed to generate QR Code for PDF: {e}")
+        qr_flowable = "[QR Code Generation Failed]"
+
+    # QR Code layout
     qr_data = [
         [Paragraph("<b>SCAN QR TO PAY ONLINE</b>", label_style)],
-        ["[ MOCK QR CODE FOR PRESENTATION ]"],
+        [qr_flowable],
     ]
-    qr_table = Table(qr_data, colWidths=[200], rowHeights=[20, 100])
+    qr_table = Table(qr_data, colWidths=[200], rowHeights=[20, 85])
     qr_table.setStyle(TableStyle([
         ('BOX', (0,0), (-1,-1), 1, colors.HexColor('#0F172A')),
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#F1F5F9')),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 5),
     ]))
     story.append(qr_table)
-    story.append(Spacer(1, 40))
+    story.append(Spacer(1, 30))
     
     # Footer info
     footer_text = Paragraph(
@@ -108,6 +125,15 @@ def generate_challan_pdf(violation: dict) -> str:
     story.append(footer_text)
     
     doc.build(story)
+    
+    # Optional clean up of temporary QR code image file
+    try:
+        if qr_img_path.exists():
+            # Keep it or remove it. Leaving it is fine as proof.
+            pass
+    except Exception:
+        pass
+
     return str(pdf_path)
 
 def generate_report_pdf(violations_list: list, report_type: str) -> str:

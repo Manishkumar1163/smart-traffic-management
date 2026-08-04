@@ -35,3 +35,17 @@ class ViolationCreate(BaseModel):
 
 class SettingsUpdate(BaseModel):
     max_speed: int
+
+class DriverRegister(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    email: EmailStr
+    phone: str = Field(..., min_length=10, max_length=15)
+    license_plate: str = Field(..., min_length=4)
+    license_number: str = Field(..., min_length=5)
+    address: str = Field(..., min_length=5)
+    rc_number: Optional[str] = None
+    insurance_number: Optional[str] = None
+    insurance_expiry: Optional[str] = None
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
