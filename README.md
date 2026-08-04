@@ -50,14 +50,8 @@ npm start
 **Type:** Final Year Project  
 **Topic:** Smart Traffic Management System
 ## 👨‍💻 Author
-Your Name  
+Manish Kumar
 B.Tech Computer Science Engineering
 ## 📄 License
 This is an academic project for educational purposes.
 ---
-**Next Steps:**
-1. Paste complete code from Claude's artifacts
-2. Install dependencies
-3. Configure environment variables
-4. Run and test the system
-5. Create project report
