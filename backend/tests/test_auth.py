@@ -16,17 +16,37 @@ def test_register_user(client):
     assert "id" in data
 
 def test_register_duplicate_email(client):
-    payload = {
+    # Register first
+    payload_1 = {
+        "name": "Operator Jane",
+        "email": "jane@traffic.com",
+        "password": "secretpassword",
+        "role": "traffic_officer"
+    }
+    client.post("/api/auth/register", json=payload_1)
+
+    # Attempt duplicate register
+    payload_2 = {
         "name": "Operator Jane Duplicate",
         "email": "jane@traffic.com",
         "password": "secretpassword",
         "role": "traffic_officer"
     }
-    response = client.post("/api/auth/register", json=payload)
+    response = client.post("/api/auth/register", json=payload_2)
     assert response.status_code == 400
     assert response.json()["detail"] == "Email already registered"
 
 def test_login_user(client):
+    # Register first
+    reg_payload = {
+        "name": "Operator Jane",
+        "email": "jane@traffic.com",
+        "password": "secretpassword",
+        "role": "traffic_officer"
+    }
+    client.post("/api/auth/register", json=reg_payload)
+
+    # Login
     payload = {
         "email": "jane@traffic.com",
         "password": "secretpassword"
@@ -40,6 +60,16 @@ def test_login_user(client):
     assert data["name"] == "Operator Jane"
 
 def test_login_invalid_credentials(client):
+    # Register first
+    reg_payload = {
+        "name": "Operator Jane",
+        "email": "jane@traffic.com",
+        "password": "secretpassword",
+        "role": "traffic_officer"
+    }
+    client.post("/api/auth/register", json=reg_payload)
+
+    # Login with wrong credentials
     payload = {
         "email": "jane@traffic.com",
         "password": "wrongpassword"
@@ -49,6 +79,15 @@ def test_login_invalid_credentials(client):
     assert response.json()["detail"] == "Incorrect email or password"
 
 def test_refresh_token(client):
+    # Register first
+    reg_payload = {
+        "name": "Operator Jane",
+        "email": "jane@traffic.com",
+        "password": "secretpassword",
+        "role": "traffic_officer"
+    }
+    client.post("/api/auth/register", json=reg_payload)
+
     # Log in first
     login_payload = {
         "email": "jane@traffic.com",

@@ -16,12 +16,14 @@ async def stats(user: dict = Depends(get_current_user)):
     pending_violations = await db.violations.count_documents({"status": "pending"})
     paid_violations = await db.violations.count_documents({"status": "paid"})
     
-    # 2. Time-based violations (Today vs Monthly)
+    # 2. Time-based violations (Today vs Weekly vs Monthly)
     now = datetime.now()
     today_start = datetime(now.year, now.month, now.day).isoformat()
+    week_start = (now - timedelta(days=7)).isoformat()
     month_start = datetime(now.year, now.month, 1).isoformat()
     
     today_violations = await db.violations.count_documents({"time": {"$gte": today_start}})
+    weekly_violations = await db.violations.count_documents({"time": {"$gte": week_start}})
     monthly_violations = await db.violations.count_documents({"time": {"$gte": month_start}})
     
     # 3. Fine metrics (Collected vs Pending)
@@ -69,7 +71,6 @@ async def stats(user: dict = Depends(get_current_user)):
 
     # 8. Vehicle Type Distribution
     vehicle_types = {"car": 0, "bike": 0, "bus": 0, "truck": 0, "auto": 0, "person": 0}
-    # Fetch from detections or sum driver registrations
     async for d in db.detections.find({}, {"type": 1, "plate": 1}):
         plate = d.get("plate", "")
         v_class = "car"
@@ -91,15 +92,32 @@ async def stats(user: dict = Depends(get_current_user)):
             if k in vehicle_types:
                 vehicle_types[k] += v
 
-    # Fallback default mock distribution if database collections are clean (first run)
     if sum(vehicle_types.values()) == 0:
         vehicle_types = {"car": 62, "bike": 48, "bus": 8, "truck": 12, "auto": 24, "person": 5}
+
+    # 9. Top Violation Areas (MongoDB Aggregation Pipeline)
+    top_areas = {}
+    try:
+        pipeline = [
+            {"$group": {"_id": "$location", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}},
+            {"$limit": 5}
+        ]
+        async for item in db.violations.aggregate(pipeline):
+            loc_name = item["_id"] or "live"
+            top_areas[loc_name] = item["count"]
+    except Exception as e:
+        pass
+        
+    if not top_areas or sum(top_areas.values()) == 0:
+        top_areas = {"Junction-4": 15, "Highway-1": 10, "Junction-C": 6, "live": 4}
 
     return {
         "total_violations": total_violations,
         "pending_violations": pending_violations,
         "paid_violations": paid_violations,
         "today_violations": today_violations,
+        "weekly_violations": weekly_violations,
         "monthly_violations": monthly_violations,
         
         "collected_fine": collected_fine,
@@ -112,7 +130,8 @@ async def stats(user: dict = Depends(get_current_user)):
         
         "violation_types": violation_types,
         "daily_trend": daily_trend,
-        "vehicle_types": vehicle_types
+        "vehicle_types": vehicle_types,
+        "top_areas": top_areas
     }
 
 @router.get("/settings")

@@ -15,19 +15,20 @@ import Skeleton from '@mui/material/Skeleton';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { useTheme } from '@mui/material/styles';
 
 import api, { API_URL } from '../services/api';
 
 // Create styled glowing markers to bypass default Leaflet image import issues
 const getCameraIcon = () => L.divIcon({
-  html: `<div style="background-color: #10b981; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 12px #10b981;"></div>`,
+  html: `<div style="background-color: #6366f1; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 14px #6366f1;"></div>`,
   className: 'glow-camera-marker',
   iconSize: [16, 16],
   iconAnchor: [8, 8]
 });
 
 const getViolationIcon = (type) => {
-  const color = type === 'red_light' ? '#ef4444' : '#f59e0b';
+  const color = type === 'red_light' || type === 'wrong_lane' || type === 'wrong_direction' ? '#ef4444' : '#f59e0b';
   return L.divIcon({
     html: `<div style="background-color: ${color}; width: 14px; height: 14px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 0 10px ${color};"></div>`,
     className: 'glow-violation-marker',
@@ -45,11 +46,14 @@ const cameraLocations = [
 
 export default function MapModule() {
   const navigate = useNavigate();
+  const theme = useTheme();
   const [violations, setViolations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [mapCenter] = useState([18.5204, 73.8567]); // Center on Pune by default
+
+  const isDark = theme.palette.mode === 'dark';
 
   const fetchViolations = async () => {
     try {
@@ -94,87 +98,101 @@ export default function MapModule() {
 
   if (loading) {
     return (
-      <Box>
-        <Typography variant="h4" sx={{ fontWeight: 800, mb: 4 }}><Skeleton width={200} /></Typography>
-        <Skeleton variant="rounded" height={500} sx={{ borderRadius: 3 }} />
+      <Box className="animate-slide-up">
+        <Typography variant="h4" sx={{ fontWeight: 900, mb: 4 }}><Skeleton width={220} /></Typography>
+        <Skeleton variant="rounded" height={500} sx={{ borderRadius: '16px' }} />
       </Box>
     );
   }
 
   return (
-    <Box>
+    <Box className="animate-slide-up">
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 800, tracking: -0.5 }}>
-          🗺️ Interactive GIS Traffic Map
+        <Typography variant="h4" sx={{ fontWeight: 900, letterSpacing: -0.5 }}>
+          GIS Surveillance Map
         </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Track spatial locations of AI violations and camera feeds in real time
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+          Real-time geographical tracking of AI-logged traffic offenses and active junction cameras
         </Typography>
       </Box>
 
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={5}>
-          <TextField
-            label="Search by Vehicle Plate"
-            placeholder="e.g. MH12AB1234"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            fullWidth
-          />
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <TextField
-            select
-            label="Violation Type Filter"
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            fullWidth
-          >
-            <MenuItem value="all">All Violations</MenuItem>
-            <MenuItem value="red_light">Red Light Violation</MenuItem>
-            <MenuItem value="speeding">Over Speeding</MenuItem>
-            <MenuItem value="no_helmet">No Helmet</MenuItem>
-            <MenuItem value="no_seatbelt">No Seat Belt</MenuItem>
-            <MenuItem value="triple_riding">Triple Riding</MenuItem>
-            <MenuItem value="wrong_lane">Wrong Lane Driving</MenuItem>
-            <MenuItem value="wrong_direction">Wrong Direction Driving</MenuItem>
-            <MenuItem value="illegal_parking">Illegal Parking</MenuItem>
-          </TextField>
-        </Grid>
-        <Grid item xs={12} sm={3}>
-          <Box sx={{ p: 1.5, display: 'flex', gap: 2, alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <div style={{ backgroundColor: '#10b981', width: 10, height: 10, borderRadius: '50%' }}></div>
-              <Typography variant="caption" sx={{ fontWeight: 700 }}>Cameras ({cameraLocations.length})</Typography>
-            </Stack>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <div style={{ backgroundColor: '#ef4444', width: 10, height: 10, borderRadius: '50%' }}></div>
-              <Typography variant="caption" sx={{ fontWeight: 700 }}>Violations ({filteredViolations.length})</Typography>
-            </Stack>
-          </Box>
-        </Grid>
-      </Grid>
+      {/* Advanced Map Filters Toolbar */}
+      <Card sx={{ mb: 4, borderRadius: '16px' }}>
+        <CardContent sx={{ p: 2.5 }}>
+          <Grid container spacing={3} alignItems="center">
+            <Grid item xs={12} sm={5}>
+              <TextField
+                label="Search by Vehicle Plate / Spot"
+                placeholder="e.g. MH12AB1234"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                select
+                label="Offense Filter"
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                fullWidth
+              >
+                <MenuItem value="all">All Violations</MenuItem>
+                <MenuItem value="red_light">Red Light Violation</MenuItem>
+                <MenuItem value="speeding">Over Speeding</MenuItem>
+                <MenuItem value="no_helmet">No Helmet</MenuItem>
+                <MenuItem value="no_seatbelt">No Seat Belt</MenuItem>
+                <MenuItem value="triple_riding">Triple Riding</MenuItem>
+                <MenuItem value="wrong_lane">Wrong Lane Driving</MenuItem>
+                <MenuItem value="wrong_direction">Wrong Direction Driving</MenuItem>
+                <MenuItem value="illegal_parking">Illegal Parking</MenuItem>
+              </TextField>
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <Box sx={{ display: 'flex', gap: 3, alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <div style={{ backgroundColor: '#6366f1', width: 10, height: 10, borderRadius: '50%', boxShadow: '0 0 6px #6366f1' }}></div>
+                  <Typography variant="caption" sx={{ fontWeight: 800 }}>Cameras ({cameraLocations.length})</Typography>
+                </Stack>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <div style={{ backgroundColor: '#ef4444', width: 10, height: 10, borderRadius: '50%', boxShadow: '0 0 6px #ef4444' }}></div>
+                  <Typography variant="caption" sx={{ fontWeight: 800 }}>Violations ({filteredViolations.length})</Typography>
+                </Stack>
+              </Box>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
 
-      <Card sx={{ borderRadius: 3, overflow: 'hidden', border: 1, borderColor: 'divider', boxShadow: 3 }}>
+      <Card sx={{ borderRadius: '16px', overflow: 'hidden', boxShadow: '0 20px 50px -15px rgba(0, 0, 0, 0.65)' }}>
         <Box sx={{ height: '600px', width: '100%', position: 'relative' }}>
           <MapContainer center={mapCenter} zoom={6} style={{ height: '100%', width: '100%' }}>
+            {/* Custom dark theme tile layers */}
             <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
+              url={isDark 
+                ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+              }
             />
             
             {/* Draw active Camera Markers */}
             {cameraLocations.map((cam) => (
               <Marker key={cam.id} position={cam.coords} icon={getCameraIcon()}>
                 <Popup>
-                  <Box sx={{ p: 1 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                  <Box sx={{ p: 0.5, fontFamily: '"Outfit", sans-serif' }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'primary.main', mb: 0.5 }}>
                       📹 {cam.name}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                      Camera ID: {cam.id}
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5, fontSize: 10 }}>
+                      Camera Sensor Node ID: {cam.id}
                     </Typography>
-                    <Chip label={cam.status} color="success" size="small" sx={{ fontWeight: 700, fontSize: 10 }} />
+                    <Chip 
+                      label="CAMERA ACTIVE" 
+                      color="success" 
+                      size="small" 
+                      sx={{ fontWeight: 800, fontSize: 9.5, height: 20 }} 
+                    />
                   </Box>
                 </Popup>
               </Marker>
@@ -186,29 +204,34 @@ export default function MapModule() {
               return (
                 <Marker key={v._id} position={coords} icon={getViolationIcon(v.violation_type)}>
                   <Popup>
-                    <Box sx={{ p: 1, minWidth: 180 }}>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'error.main', mb: 0.5 }}>
+                    <Box sx={{ p: 0.5, minWidth: 200, fontFamily: '"Outfit", sans-serif' }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 900, color: 'error.main', mb: 0.5 }}>
                         🚨 {v.violation_type.replace(/_/g, ' ').toUpperCase()}
                       </Typography>
-                      <Divider sx={{ my: 0.5 }} />
-                      <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                        Plate: {v.license_plate}
+                      <Divider sx={{ my: 0.75 }} />
+                      
+                      <Typography variant="body2" sx={{ fontWeight: 800, mb: 0.5, color: '#f8fafc' }}>
+                        Vehicle Plate: {v.license_plate}
                       </Typography>
-                      <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary' }}>
-                        Fine: ₹{v.fine_amount} | Status: {v.payment_status.toUpperCase()}
+                      <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', mb: 0.25, fontSize: 11 }}>
+                        Fine Amount: ₹{v.fine_amount}
                       </Typography>
-                      <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', mb: 1.5 }}>
-                        Time: {new Date(v.timestamp).toLocaleDateString()} {new Date(v.timestamp).toLocaleTimeString()}
+                      <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', mb: 0.25, fontSize: 11 }}>
+                        Status: <strong>{v.payment_status.toUpperCase()}</strong>
                       </Typography>
+                      <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', mb: 2, fontSize: 10 }}>
+                        Logged: {new Date(v.timestamp).toLocaleString()}
+                      </Typography>
+                      
                       <Button
                         variant="contained"
                         size="small"
                         fullWidth
                         onClick={() => navigate(`/pay/${v._id}`)}
                         disabled={v.payment_status === 'paid'}
-                        sx={{ textTransform: 'none', fontWeight: 700, fontSize: 11 }}
+                        sx={{ py: 0.8, textTransform: 'none', fontWeight: 800, fontSize: 11 }}
                       >
-                        {v.payment_status === 'paid' ? 'Paid & Settled' : 'Pay Challan'}
+                        {v.payment_status === 'paid' ? 'Settled Case' : 'Process Payment'}
                       </Button>
                     </Box>
                   </Popup>

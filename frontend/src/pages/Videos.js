@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Grid';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import CardActions from '@mui/material/CardActions';
@@ -15,9 +14,13 @@ import Stack from '@mui/material/Stack';
 import Divider from '@mui/material/Divider';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
+import IconButton from '@mui/material/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
+import AutoStoriesIcon from '@mui/icons-material/AutoStories';
 
 import api, { API_URL } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { parseError } from '../utils/errorParser';
 
 export default function Videos() {
   const { user } = useAuth();
@@ -77,158 +80,189 @@ export default function Videos() {
       alert('Video and associated logs purged successfully.');
       fetchVideos();
     } catch (err) {
-      alert(`Purge failed: ${err.response?.data?.detail || err.message}`);
+      alert(`Purge failed: ${parseError(err)}`);
     }
   };
 
   if (loading && videos.length === 0) {
     return (
-      <Box>
-        <Typography variant="h4" sx={{ fontWeight: 800, mb: 4 }}><Skeleton width={200} /></Typography>
-        <Grid container spacing={3}>
+      <Box className="animate-slide-up" sx={{ width: '100%' }}>
+        <Typography variant="h4" sx={{ fontWeight: 900, mb: 4 }}><Skeleton width={220} /></Typography>
+        <Box 
+          sx={{ 
+            display: 'grid', 
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' }, 
+            gap: 3, 
+            width: '100%' 
+          }}
+        >
           {[1, 2, 3].map((i) => (
-            <Grid item xs={12} sm={6} md={4} key={i}>
-              <Skeleton variant="rounded" height={220} sx={{ borderRadius: 3 }} />
-            </Grid>
+            <Skeleton key={i} variant="rounded" height={220} sx={{ borderRadius: '16px', width: '100%' }} />
           ))}
-        </Grid>
+        </Box>
       </Box>
     );
   }
 
   return (
-    <Box>
+    <Box className="animate-slide-up">
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 800, tracking: -0.5 }}>
-          📹 Processed Traffic Video Archives
+        <Typography variant="h4" sx={{ fontWeight: 900, letterSpacing: -0.5 }}>
+          Video Processing Archives
         </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Browse offline video processing queue, review YOLOv8 tracking logs, and audit results
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+          Track background video analysis runs, monitor YOLOv8 progress, and review output challan entries
         </Typography>
       </Box>
 
       {videos.length === 0 ? (
-        <Alert severity="info" sx={{ py: 3, borderRadius: 3 }}>
+        <Alert severity="info" variant="filled" sx={{ py: 3, borderRadius: '12px' }}>
           No offline traffic videos uploaded yet. Head to "Upload Video" to queue files.
         </Alert>
       ) : (
-        <Grid container spacing={3}>
+        <Box 
+          sx={{ 
+            display: 'grid', 
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' }, 
+            gap: 3, 
+            width: '100%' 
+          }}
+        >
           {videos.map((video) => (
-            <Grid item xs={12} sm={6} md={4} key={video._id}>
-              <Card sx={{ borderRadius: 3, boxShadow: 2, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                <CardContent sx={{ p: 3 }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 700, noWrap: true, mb: 1 }}>
-                    🎬 {video.filename}
-                  </Typography>
-                  
-                  <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-                    <Chip
-                      label={video.processed ? 'Processed' : 'Processing'}
-                      size="small"
-                      color={video.processed ? 'success' : 'warning'}
-                      sx={{ fontWeight: 700, borderRadius: 1.5 }}
-                    />
-                    <Chip
-                      label={`Violations: ${video.total_detections}`}
-                      size="small"
-                      color="secondary"
-                      variant="outlined"
-                      sx={{ fontWeight: 700, borderRadius: 1.5 }}
-                    />
-                  </Box>
-                  
-                  <Stack spacing={0.8} sx={{ color: 'text.secondary', fontSize: 13 }}>
-                    <Box>📍 Location: <strong>{video.location}</strong></Box>
-                    <Box>📅 Uploaded: {new Date(video.uploaded_at).toLocaleString('en-IN')}</Box>
-                  </Stack>
-                </CardContent>
+            <Card key={video._id} sx={{ borderRadius: '16px', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxShadow: '0 8px 24px rgba(0,0,0,0.3)', width: '100%', minWidth: 0 }}>
+              <CardContent sx={{ p: 3, minWidth: 0 }}>
+                <Typography variant="subtitle1" noWrap sx={{ fontWeight: 800, mb: 1.5 }}>
+                  🎬 {video.filename}
+                </Typography>
                 
-                <CardActions sx={{ px: 3, pb: 3, gap: 1 }}>
-                  <Button
-                    variant="contained"
+                <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
+                  <Chip
+                    label={video.processed ? 'Processed' : 'Processing...'}
                     size="small"
-                    disabled={!video.processed}
-                    onClick={() => handleOpenDetections(video)}
-                    sx={{ textTransform: 'none', fontWeight: 700, flex: 1 }}
+                    color={video.processed ? 'success' : 'warning'}
+                    icon={!video.processed ? <CircularProgress size={10} color="inherit" /> : undefined}
+                    sx={{ fontWeight: 800, borderRadius: '8px' }}
+                  />
+                  <Chip
+                    label={`Violations: ${video.total_detections}`}
+                    size="small"
+                    color="secondary"
+                    variant="outlined"
+                    sx={{ fontWeight: 800, borderRadius: '8px' }}
+                  />
+                </Box>
+                
+                <Stack spacing={1} sx={{ color: 'text.secondary', fontSize: 13 }}>
+                  <Box>📍 Location: <strong>{video.location}</strong></Box>
+                  <Box>📅 Uploaded: {new Date(video.uploaded_at).toLocaleString('en-IN')}</Box>
+                </Stack>
+              </CardContent>
+              
+              <CardActions sx={{ px: 3, pb: 3, gap: 1.5 }}>
+                <Button
+                  variant="contained"
+                  size="medium"
+                  disabled={!video.processed}
+                  onClick={() => handleOpenDetections(video)}
+                  sx={{ textTransform: 'none', fontWeight: 700, flex: 1 }}
+                >
+                  View Challan Logs
+                </Button>
+                
+                {user && user.role === 'admin' && (
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    size="medium"
+                    onClick={() => handleDeleteVideo(video._id)}
+                    sx={{ textTransform: 'none', fontWeight: 700 }}
                   >
-                    View Challan Logs
+                    Delete
                   </Button>
-                  
-                  {user && user.role === 'admin' && (
-                    <Button
-                      variant="outlined"
-                      color="error"
-                      size="small"
-                      onClick={() => handleDeleteVideo(video._id)}
-                      sx={{ textTransform: 'none', fontWeight: 700 }}
-                    >
-                      Delete
-                    </Button>
-                  )}
-                </CardActions>
-              </Card>
-            </Grid>
+                )}
+              </CardActions>
+            </Card>
           ))}
-        </Grid>
+        </Box>
       )}
 
       {/* Detections Dialog */}
       {selectedVideo && (
-        <Dialog open={openModal} onClose={handleCloseModal} maxWidth="md" fullWidth>
-          <DialogTitle sx={{ fontWeight: 700, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>Challans Audited from: {selectedVideo.filename}</span>
-            <Button onClick={handleCloseModal} sx={{ fontWeight: 700 }}>Close</Button>
+        <Dialog 
+          open={openModal} 
+          onClose={handleCloseModal} 
+          maxWidth="md" 
+          fullWidth
+          PaperProps={{
+            sx: { borderRadius: '16px', bgcolor: 'background.paper', backgroundImage: 'none' }
+          }}
+        >
+          <DialogTitle sx={{ m: 0, p: 2.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h6" sx={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <AutoStoriesIcon color="primary" />
+              Challans Audited from: {selectedVideo.filename}
+            </Typography>
+            <IconButton onClick={handleCloseModal} size="small">
+              <CloseIcon />
+            </IconButton>
           </DialogTitle>
-          <DialogContent dividers sx={{ p: 4 }}>
+          <Divider sx={{ opacity: 0.5 }} />
+          
+          <DialogContent sx={{ p: 3.5 }}>
             {detectionsLoading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
                 <CircularProgress />
               </Box>
             ) : detections.length === 0 ? (
-              <Box sx={{ p: 4, bgcolor: 'action.hover', borderRadius: 2, textalign: 'center' }}>
+              <Box sx={{ p: 5, bgcolor: 'action.hover', borderRadius: '12px', textAlign: 'center' }}>
                 <Typography variant="body1" color="text.secondary">
                   No traffic violations detected in this video file. Good road safety compliance!
                 </Typography>
               </Box>
             ) : (
-              <Grid container spacing={3}>
+              <Box 
+                sx={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, 
+                  gap: 3, 
+                  width: '100%' 
+                }}
+              >
                 {detections.map((d, index) => (
-                  <Grid item xs={12} sm={6} key={d._id || index}>
-                    <Card variant="outlined" sx={{ borderRadius: 2.5, p: 2 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                          {d.violation_type.replace(/_/g, ' ').toUpperCase()}
-                        </Typography>
-                        <Chip
-                          label="PENDING"
-                          size="small"
-                          color="warning"
-                          sx={{ fontWeight: 700, fontSize: 9, borderRadius: 1 }}
+                  <Card key={d._id || index} variant="outlined" sx={{ borderRadius: '12px', p: 2.5, border: '1px solid rgba(99,102,241,0.15)', bgcolor: 'rgba(255, 255, 255, 0.01)', width: '100%', minWidth: 0 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'primary.main' }}>
+                        {d.violation_type.replace(/_/g, ' ').toUpperCase()}
+                      </Typography>
+                      <Chip
+                        label="PENDING"
+                        size="small"
+                        color="warning"
+                        sx={{ fontWeight: 800, fontSize: 9.5 }}
+                      />
+                    </Box>
+                    
+                    <Divider sx={{ my: 1.5, opacity: 0.5 }} />
+                    
+                    <Stack spacing={0.8} sx={{ fontSize: 13, color: 'text.secondary', mb: 2.5 }}>
+                      <Box>Vehicle Plate: <strong style={{ color: '#fff' }}>{d.license_plate}</strong></Box>
+                      <Box>Fine Amount: <strong>₹{d.fine_amount}</strong></Box>
+                      <Box>Confidence Score: <strong>{(d.confidence_score * 100).toFixed(0)}%</strong></Box>
+                    </Stack>
+                    
+                    {d.screenshot_path && (
+                      <Box sx={{ width: '100%', height: 130, overflow: 'hidden', borderRadius: 2, border: 1, borderColor: 'divider' }}>
+                        <img
+                          src={`${API_URL}/screenshots/${d.screenshot_path}`}
+                          alt="Detection evidence"
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          onError={(e) => { e.target.style.display = 'none'; }}
                         />
                       </Box>
-                      
-                      <Divider sx={{ my: 1 }} />
-                      
-                      <Stack spacing={0.5} sx={{ fontSize: 12.5, color: 'text.secondary', mb: 2 }}>
-                        <Box>Vehicle Plate: <strong>{d.license_plate}</strong></Box>
-                        <Box>Fine Amount: <strong>₹{d.fine_amount}</strong></Box>
-                        <Box>Confidence Score: <strong>{(d.confidence_score * 100).toFixed(0)}%</strong></Box>
-                      </Stack>
-                      
-                      {d.screenshot_path && (
-                        <Box sx={{ width: '100%', height: 110, overflow: 'hidden', borderRadius: 1.5, border: 1, borderColor: 'divider' }}>
-                          <img
-                            src={`${API_URL}/screenshots/${d.screenshot_path}`}
-                            alt="Detection evidence"
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            onError={(e) => { e.target.style.display = 'none'; }}
-                          />
-                        </Box>
-                      )}
-                    </Card>
-                  </Grid>
+                    )}
+                  </Card>
                 ))}
-              </Grid>
+              </Box>
             )}
           </DialogContent>
         </Dialog>

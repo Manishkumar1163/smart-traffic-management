@@ -21,3 +21,4 @@ qrcode==7.4.2
 pytest==7.4.3
 httpx==0.25.1
 reportlab==5.0.0
+bcrypt==3.2.0

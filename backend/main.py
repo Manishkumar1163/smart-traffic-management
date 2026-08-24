@@ -11,6 +11,7 @@ from backend.routes.videos import router as videos_router
 from backend.routes.stats import router as stats_router
 from backend.routes.drivers import router as drivers_router
 from backend.routes.payments import router as payments_router
+from backend.routes.advanced import router as advanced_router
 from backend.database.seeder import seed_database
 
 # Setup logging
@@ -48,6 +49,7 @@ app.include_router(videos_router)
 app.include_router(stats_router)
 app.include_router(drivers_router)
 app.include_router(payments_router)
+app.include_router(advanced_router)
 
 @app.on_event("startup")
 async def startup_event():
@@ -55,6 +57,15 @@ async def startup_event():
     # Seed default admin user and driver/vehicle database records
     await seed_database()
     log.info("✅ Database seeded with default credentials and driver profiles.")
+
+@app.post("/api/test/insert-violation", tags=["Testing Only"])
+async def insert_violation(data: dict):
+    from backend.database.connection import db
+    from fastapi import HTTPException
+    if settings.MONGODB_DB != "traffic_ai_test":
+         raise HTTPException(status_code=400, detail="Only allowed in testing mode")
+    res = await db.violations.insert_one(data)
+    return {"id": str(res.inserted_id)}
 
 @app.get("/")
 async def root():

@@ -67,6 +67,17 @@ def test_register_driver_authorized(client, auth_headers):
     assert data["driver"]["license_plate"] == "DL3CAQ1111"
 
 def test_get_drivers_list(client, auth_headers):
+    # Register a driver first to seed database
+    driver_payload = {
+        "name": "Suresh Gupta",
+        "email": "suresh@example.com",
+        "phone": "9876543222",
+        "license_plate": "DL3CAQ1111",
+        "license_number": "DL-1220200011111",
+        "address": "Delhi Road, Dwarka, India"
+    }
+    client.post("/api/drivers/register", json=driver_payload, headers=auth_headers)
+
     # Get all drivers
     response = client.get("/api/drivers", headers=auth_headers)
     assert response.status_code == 200

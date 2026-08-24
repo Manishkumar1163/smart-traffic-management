@@ -17,10 +17,23 @@ from backend.services.email import send_email_async
 
 log = logging.getLogger(__name__)
 
-# YOLO Model Instance loaded from config
-yolo_path = settings.BASE_DIR / "yolov8n.pt"
-if not yolo_path.exists():
-    yolo_path = "yolov8n.pt"
+# Resolve YOLO model path: check custom best.pt, then fallback to yolov8n.pt
+weights_dir = settings.BASE_DIR / "weights"
+best_weights = weights_dir / "best.pt"
+best_weights_training = settings.BASE_DIR / "training" / "weights" / "best.pt"
+
+yolo_path = "yolov8n.pt"
+if best_weights.exists():
+    yolo_path = str(best_weights)
+    log.info(f"🎯 Loading Custom Fine-Tuned YOLOv8 Weights: {yolo_path}")
+elif best_weights_training.exists():
+    yolo_path = str(best_weights_training)
+    log.info(f"🎯 Loading Custom Training YOLOv8 Weights: {yolo_path}")
+else:
+    default_path = settings.BASE_DIR / "yolov8n.pt"
+    if default_path.exists():
+        yolo_path = str(default_path)
+    log.info(f"🎯 Loading Pre-trained Default YOLOv8 Weights: {yolo_path}")
 
 try:
     cv_model = YOLO(str(yolo_path))
@@ -192,9 +205,28 @@ def create_composite_evidence(frame, bbox, vtype):
         cv2.rectangle(main_img, (x1, y1), (x2, y2), (0, 0, 255), 3)
         cv2.putText(main_img, "VIOLATOR", (x1, y1-10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
         
-        m = 30
-        cx1, cy1, cx2, cy2 = max(0, x1-m), max(0, y1-m), min(w, x2+m), min(h, y2+m)
-        crop = frame[cy1:cy2, cx1:cx2]
+        if vtype == "no_helmet":
+            # Target the rider's head/helmet region (upper 35% of bounding box, slightly padded above)
+            box_h = y2 - y1
+            box_w = x2 - x1
+            cy1 = max(0, y1 - int(box_h * 0.05) - 15)
+            cy2 = min(h, y1 + int(box_h * 0.35))
+            cx1 = max(0, x1 + int(box_w * 0.12))
+            cx2 = min(w, x2 - int(box_w * 0.12))
+            crop = frame[cy1:cy2, cx1:cx2]
+        elif vtype == "no_seatbelt":
+            # Target the front windshield area (upper 55% of the vehicle bounding box)
+            box_h = y2 - y1
+            box_w = x2 - x1
+            cy1 = max(0, y1 + int(box_h * 0.05))
+            cy2 = min(h, y1 + int(box_h * 0.55))
+            cx1 = max(0, x1 + int(box_w * 0.1))
+            cx2 = min(w, x2 - int(box_w * 0.1))
+            crop = frame[cy1:cy2, cx1:cx2]
+        else:
+            m = 30
+            cx1, cy1, cx2, cy2 = max(0, x1-m), max(0, y1-m), min(w, x2+m), min(h, y2+m)
+            crop = frame[cy1:cy2, cx1:cx2]
         
         if crop.size == 0: return main_img
         
@@ -214,6 +246,8 @@ def create_composite_evidence(frame, bbox, vtype):
 
 def save_violation(vtype, plate, fine, frame, loop, bbox=None, crop_name=None):
     """Saves live violation screenshot and stores metadata in MongoDB."""
+    from bson import ObjectId
+    from backend.services.notifier import dispatch_violation_alerts
     if not plate:
         plate = f"UNK{datetime.now().strftime('%H%M%S')}"
     
@@ -240,7 +274,9 @@ def save_violation(vtype, plate, fine, frame, loop, bbox=None, crop_name=None):
         img_path = str(settings.SCREENSHOTS_DIR / fname)
         cv2.imwrite(img_path, evidence_frame)
     
+    v_id = ObjectId()
     doc = {
+        "_id": v_id,
         "plate": plate,
         "type": vtype,
         "fine": fine,
@@ -254,12 +290,20 @@ def save_violation(vtype, plate, fine, frame, loop, bbox=None, crop_name=None):
     
     if loop and not loop.is_closed():
         asyncio.run_coroutine_threadsafe(db.violations.insert_one(doc), loop)
-        asyncio.run_coroutine_threadsafe(send_email_async(vtype, plate, fine, img_path), loop)
+        asyncio.run_coroutine_threadsafe(dispatch_violation_alerts(str(v_id), plate, vtype, fine, img_path), loop)
         log.info(f"🚨 VIOLATION [{vtype.upper()}] plate={plate} fine=₹{fine}")
     else:
         # Standalone insert fallback
         try:
             db.violations.insert_one(doc)
+            try:
+                loop_to_use = asyncio.get_event_loop()
+                if loop_to_use.is_running():
+                    loop_to_use.create_task(dispatch_violation_alerts(str(v_id), plate, vtype, fine, img_path))
+                else:
+                    loop_to_use.run_until_complete(dispatch_violation_alerts(str(v_id), plate, vtype, fine, img_path))
+            except Exception:
+                asyncio.run(dispatch_violation_alerts(str(v_id), plate, vtype, fine, img_path))
             log.info(f"🚨 VIOLATION LOGGED: [{vtype.upper()}] plate={plate}")
         except Exception as e:
             log.error(f"Failed to log violation synchronously: {e}")
@@ -269,7 +313,7 @@ cap = None
 
 def get_cap():
     global cap
-    if cap is None:
+    if cap is None or not cap.isOpened():
         cap = cv2.VideoCapture(0)
     return cap
 
@@ -453,42 +497,28 @@ def run_live(loop):
         global_annotated_frame = frame.copy()
     
     state.live = False
+    global cap
+    if cap is not None:
+        cap.release()
+        cap = None
     log.info("🛑 LIVE AI DETECTION STOPPED")
 
 def stream_frames():
-    live_cap = get_cap()
+    global global_annotated_frame
     while True:
         if state.live:
             if global_annotated_frame is not None:
                 _, buf = cv2.imencode('.jpg', global_annotated_frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
                 yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + buf.tobytes() + b'\r\n')
-            time.sleep(0.05)
+            time.sleep(0.04)
         else:
-            ret, frame = live_cap.read()
-            if not ret: 
-                time.sleep(0.1)
-                continue
-            
-            if cv_model:
-                res = cv_model(frame, conf=0.4)
-                for b in res[0].boxes:
-                    x1,y1,x2,y2 = map(int, b.xyxy[0])
-                    cls = cv_model.names[int(b.cls[0])]
-                    cls_mapped = map_coco_class(cls)
-                    
-                    if cls_mapped in ['car','bus','truck','auto']:
-                        cv2.rectangle(frame, (x1,y1),(x2,y2), (0,200,0), 2)
-                        cv2.putText(frame, cls_mapped, (x1,y1-8), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,200,0), 1)
-                    elif cls_mapped == 'bike':
-                        cv2.rectangle(frame, (x1,y1),(x2,y2), (0,200,255), 2)
-                        cv2.putText(frame, "bike", (x1,y1-8), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,200,255), 1)
-                    elif cls_mapped == 'person':
-                        cv2.rectangle(frame, (x1,y1),(x2,y2), (180,180,255), 1)
-            
-            cv2.line(frame, (0,settings.STOP_Y), (frame.shape[1],settings.STOP_Y), (0,0,255), 2)
-            cv2.putText(frame, "IDLE - Click 'Start Detection'", (10,30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200,200,0), 2)
-            _, buf = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
+            # Yield a static black frame when stopped to release the webcam hardware entirely
+            import numpy as np
+            dark_frame = np.zeros((480, 640, 3), dtype=np.uint8)
+            cv2.putText(dark_frame, "SYSTEM IDLE - STREAM SHUT DOWN", (100, 240), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (220, 220, 220), 2)
+            _, buf = cv2.imencode('.jpg', dark_frame)
             yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + buf.tobytes() + b'\r\n')
+            time.sleep(0.5)
 
 # ==================== OFFLINE VIDEO PROCESSING ====================
 def _process_video_sync(video_id: str, path: str, loc: str):

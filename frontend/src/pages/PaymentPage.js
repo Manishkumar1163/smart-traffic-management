@@ -20,6 +20,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
 import api, { API_URL } from '../services/api';
+import { parseError } from '../utils/errorParser';
 
 // Initialize stripe loading (dummy publishable key is fine for loading elements, actual intents drive transactions)
 const stripePromise = loadStripe('pk_test_51PqU9rRxS1234567890abcdefghijklmnopqrstuvwxyz');
@@ -42,7 +43,11 @@ function CheckoutForm({ violationId, amount, onSuccess }) {
       const formData = new FormData();
       formData.append('violation_id', violationId);
       
-      const intentResponse = await api.post('/api/payments/create-intent', formData);
+      const intentResponse = await api.post('/api/payments/create-intent', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       const { client_secret, sandbox } = intentResponse.data;
 
       // 2. If running in Sandbox Mode (Stripe credentials missing in .env)
@@ -73,12 +78,16 @@ function CheckoutForm({ violationId, amount, onSuccess }) {
         confirmFormData.append('violation_id', violationId);
         confirmFormData.append('payment_intent_id', paymentIntent.id);
         
-        await api.post('/api/payments/confirm', confirmFormData);
+        await api.post('/api/payments/confirm', confirmFormData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
         setMessage('✅ Payment received successfully! Challan settled.');
         setTimeout(() => onSuccess(), 2000);
       }
     } catch (err) {
-      setError(err.response?.data?.detail || err.message || 'Payment intent creation failed.');
+      setError(parseError(err));
       setProcessing(false);
     }
   };
@@ -92,7 +101,11 @@ function CheckoutForm({ violationId, amount, onSuccess }) {
         // Pass a mock intent token
         confirmFormData.append('payment_intent_id', `mock_intent_token_${Date.now()}`);
         
-        await api.post('/api/payments/confirm', confirmFormData);
+        await api.post('/api/payments/confirm', confirmFormData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
         setMessage('✅ [Sandbox Mode] Mock Payment processed successfully! Notice settled.');
         setTimeout(() => onSuccess(), 1500);
       } catch (err) {
@@ -105,15 +118,14 @@ function CheckoutForm({ violationId, amount, onSuccess }) {
   return (
     <form onSubmit={handleSubmit}>
       <Stack spacing={3}>
-        {message && <Alert severity="success">{message}</Alert>}
-        {error && <Alert severity="error">{error}</Alert>}
+        {message && <Alert severity="success" variant="filled" sx={{ borderRadius: '12px' }}>{message}</Alert>}
+        {error && <Alert severity="error" variant="filled" sx={{ borderRadius: '12px' }}>{error}</Alert>}
 
         <Box
           sx={{
-            p: 2.5,
-            border: '1px solid',
-            borderColor: 'divider',
-            borderRadius: 2,
+            p: 3,
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            borderRadius: '12px',
             bgcolor: 'action.hover'
           }}
         >
@@ -123,10 +135,10 @@ function CheckoutForm({ violationId, amount, onSuccess }) {
                 base: {
                   fontSize: '16px',
                   color: '#f8fafc', // Default color matching theme
-                  fontFamily: 'Outfit, Inter, sans-serif',
+                  fontFamily: 'Inter, sans-serif',
                   '::placeholder': { color: '#64748b' }
                 },
-                invalid: { color: '#f43f5e' }
+                invalid: { color: '#ef4444' }
               }
             }}
           />
@@ -138,22 +150,27 @@ function CheckoutForm({ violationId, amount, onSuccess }) {
           size="large"
           fullWidth
           disabled={processing}
-          sx={{ py: 1.5, fontWeight: 700, textTransform: 'none' }}
+          sx={{ 
+            py: 1.6, 
+            fontWeight: 700, 
+            background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
+            boxShadow: '0 8px 24px rgba(99, 102, 241, 0.3)'
+          }}
         >
-          {processing ? 'Processing Secure Transaction...' : `Pay Penalty ₹${amount}`}
+          {processing ? 'Processing Secure Transaction...' : `Pay Penalty Fee`}
         </Button>
 
-        <Stack direction="row" spacing={1} justifyContent="center" alignItems="center" sx={{ color: 'text.secondary' }}>
-          <LockIcon fontSize="small" />
-          <Typography variant="caption">Encrypted 256-bit payment validation gateway</Typography>
+        <Stack direction="row" spacing={1.5} justifyContent="center" alignItems="center" sx={{ color: 'text.secondary' }}>
+          <LockIcon fontSize="small" sx={{ opacity: 0.8 }} />
+          <Typography variant="caption" sx={{ fontWeight: 500 }}>Encrypted SSL payment gateway</Typography>
         </Stack>
         
-        <Box sx={{ mt: 1, p: 1.5, border: '1px dashed', borderColor: 'warning.main', borderRadius: 2, bgcolor: 'warning.main' + '10' }}>
-          <Typography variant="caption" color="warning.main" sx={{ display: 'block', fontWeight: 600 }}>
-            🔬 University Examiner Tip:
+        <Box sx={{ mt: 1, p: 2, border: '1px dashed rgba(245, 158, 11, 0.3)', borderRadius: '12px', bgcolor: 'rgba(245, 158, 11, 0.03)' }}>
+          <Typography variant="caption" color="warning.main" sx={{ display: 'block', fontWeight: 800, mb: 0.5 }}>
+            🔬 University Evaluation Note:
           </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-            Stripe elements require a secure connection. If you don't have a live Stripe secret key, you can enter any dummy credit card number (e.g. 4242 4242...) or click Pay to run mock validation.
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.4 }}>
+            Stripe elements require secure endpoints. If you do not have a live Stripe secret key set up, you can enter any dummy credit card number (e.g. 4242 4242...) or click Pay to run mock validation.
           </Typography>
         </Box>
       </Stack>
@@ -200,70 +217,70 @@ export default function PaymentPage() {
     alert(`Please take your Challan Reference ID: ${violationId} to the nearest Traffic Inspectorate Branch to pay your penalty in cash.`);
   };
 
-  if (loading && !violation) {
+    if (loading && !violation) {
     return (
-      <Box sx={{ maxWidth: 800, mx: 'auto' }}>
-        <Skeleton variant="text" width={150} height={40} />
-        <Skeleton variant="rounded" height={400} sx={{ mt: 3 }} />
+      <Box className="animate-slide-up">
+        <Skeleton variant="text" width={220} height={40} />
+        <Skeleton variant="rounded" height={400} sx={{ mt: 3, borderRadius: '16px' }} />
       </Box>
     );
   }
 
   return (
-    <Box sx={{ maxWidth: 900, mx: 'auto' }}>
+    <Box sx={{ maxWidth: 900, mx: 'auto' }} className="animate-slide-up">
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" sx={{ fontWeight: 800, tracking: -0.5 }}>
-          Digital Challan Payment Gate
+        <Typography variant="h4" sx={{ fontWeight: 900, letterSpacing: -0.5 }}>
+          Penalties Settle Portal
         </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Settle outstanding traffic penalties using secure Stripe card payments or find cash options
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+          Settle outstanding traffic violations securely using credit cards or check physical branch options
         </Typography>
       </Box>
 
       <Grid container spacing={4}>
         {/* Left: Summary */}
         <Grid item xs={12} md={5}>
-          <Card sx={{ borderRadius: 3, boxShadow: 2, height: '100%', backgroundImage: 'none' }}>
-            <CardContent sx={{ p: 3.5 }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 3 }}>
-                Invoice Summary
+          <Card sx={{ borderRadius: '16px', boxShadow: '0 10px 30px -10px rgba(0, 0, 0, 0.45)' }}>
+            <CardContent sx={{ p: 4 }}>
+              <Typography variant="h6" sx={{ fontWeight: 800, mb: 3.5 }}>
+                Challan Receipt Summary
               </Typography>
               
-              <Stack spacing={2}>
+              <Stack spacing={2.5}>
                 <Box>
-                  <Typography variant="caption" color="text.secondary">Reference Case ID</Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 700 }}>{violation._id}</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, fontSize: 10 }}>REFERENCE CHALLAN ID</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 700, mt: 0.25 }}>{violation._id}</Typography>
                 </Box>
                 
                 <Box>
-                  <Typography variant="caption" color="text.secondary">License Plate</Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, fontSize: 10 }}>LICENSE PLATE</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 800, color: 'primary.main', mt: 0.25 }}>
                     {violation.license_plate}
                   </Typography>
                 </Box>
 
                 <Box>
-                  <Typography variant="caption" color="text.secondary">Violation Type</Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, fontSize: 10 }}>OFFENSE TYPE</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 700, mt: 0.25 }}>
                     {violation.violation_type.replace(/_/g, ' ').toUpperCase()}
                   </Typography>
                 </Box>
 
                 <Box>
-                  <Typography variant="caption" color="text.secondary">Location & Date</Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 800, fontSize: 10 }}>LOCATION SPOT & TIMESTAMP</Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 700, mt: 0.25 }}>
                     📍 {violation.location.toUpperCase()}
                   </Typography>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
                     📅 {new Date(violation.timestamp).toLocaleString()}
                   </Typography>
                 </Box>
 
-                <Divider sx={{ my: 1.5 }} />
+                <Divider sx={{ my: 1.5, opacity: 0.5 }} />
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>Total Penalty</Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 800, color: 'secondary.main' }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>Challan Fine</Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 900, color: 'secondary.main' }}>
                     ₹{violation.fine_amount}
                   </Typography>
                 </Box>
@@ -274,10 +291,10 @@ export default function PaymentPage() {
 
         {/* Right: Payment Elements */}
         <Grid item xs={12} md={7}>
-          <Card sx={{ borderRadius: 3, boxShadow: 2, backgroundImage: 'none' }}>
+          <Card sx={{ borderRadius: '16px', boxShadow: '0 10px 30px -10px rgba(0, 0, 0, 0.45)' }}>
             <CardContent sx={{ p: 4 }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 3 }}>
-                Settle Invoice
+              <Typography variant="h6" sx={{ fontWeight: 800, mb: 3.5 }}>
+                Payment Method Options
               </Typography>
               
               <RadioGroup
@@ -290,10 +307,11 @@ export default function PaymentPage() {
                     <Card
                       variant="outlined"
                       sx={{
-                        borderRadius: 2,
+                        borderRadius: '12px',
                         cursor: 'pointer',
-                        borderColor: paymentMethod === 'online' ? 'primary.main' : 'divider',
-                        bgcolor: paymentMethod === 'online' ? 'primary.main' + '08' : 'transparent',
+                        borderColor: paymentMethod === 'online' ? 'primary.main' : 'rgba(255, 255, 255, 0.08)',
+                        bgcolor: paymentMethod === 'online' ? 'rgba(99, 102, 241, 0.04)' : 'transparent',
+                        transition: 'all 0.2s ease',
                       }}
                     >
                       <FormControlLabel
@@ -302,7 +320,7 @@ export default function PaymentPage() {
                         label={
                           <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
                             <CreditCardIcon color={paymentMethod === 'online' ? 'primary' : 'inherit'} />
-                            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Card Payment</Typography>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>Online Card</Typography>
                           </Box>
                         }
                         sx={{ width: '100%', m: 0 }}
@@ -314,10 +332,11 @@ export default function PaymentPage() {
                     <Card
                       variant="outlined"
                       sx={{
-                        borderRadius: 2,
+                        borderRadius: '12px',
                         cursor: 'pointer',
-                        borderColor: paymentMethod === 'offline' ? 'primary.main' : 'divider',
-                        bgcolor: paymentMethod === 'offline' ? 'primary.main' + '08' : 'transparent',
+                        borderColor: paymentMethod === 'offline' ? 'primary.main' : 'rgba(255, 255, 255, 0.08)',
+                        bgcolor: paymentMethod === 'offline' ? 'rgba(99, 102, 241, 0.04)' : 'transparent',
+                        transition: 'all 0.2s ease',
                       }}
                     >
                       <FormControlLabel
@@ -326,7 +345,7 @@ export default function PaymentPage() {
                         label={
                           <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
                             <BusinessIcon color={paymentMethod === 'offline' ? 'primary' : 'inherit'} />
-                            <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>Cash Branch</Typography>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>Local Branch</Typography>
                           </Box>
                         }
                         sx={{ width: '100%', m: 0 }}
@@ -345,20 +364,20 @@ export default function PaymentPage() {
                   />
                 </Elements>
               ) : (
-                <Stack spacing={3}>
-                  <Alert severity="info">
-                    Cash payments are handled physically at local municipal offices.
+                <Stack spacing={3.5}>
+                  <Alert severity="info" variant="filled" sx={{ borderRadius: '12px' }}>
+                    Offline payments are cleared physically at local municipal counters.
                   </Alert>
                   
-                  <Box sx={{ p: 2.5, bgcolor: 'action.hover', borderRadius: 2, border: 1, borderColor: 'divider' }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
-                      Steps to Settle Offline:
+                  <Box sx={{ p: 3, bgcolor: 'action.hover', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1.5 }}>
+                      Settle Offline Steps:
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" component="div">
-                      1. Visit your nearest Traffic Police Commissionerate Branch.<br />
-                      2. Present your License Plate number or Challan ID: <strong>{violationId}</strong>.<br />
-                      3. Pay the fine amount of <strong>₹{violation.fine_amount}</strong> in cash.<br />
-                      4. Request the counter clerk to clear the case from the database records.
+                    <Typography variant="body2" color="text.secondary" component="div" sx={{ lineHeight: 1.6, fontSize: 13 }}>
+                      1. Visit the nearest Traffic Police Headquarters or Local Court Branch.<br />
+                      2. Present your License Plate or Challan ID: <strong style={{ color: '#fff' }}>{violationId}</strong>.<br />
+                      3. Clear the penalty of <strong>₹{violation.fine_amount}</strong> in cash.<br />
+                      4. Request the counter officer to issue a database clearance confirmation receipt.
                     </Typography>
                   </Box>
 
@@ -366,9 +385,9 @@ export default function PaymentPage() {
                     variant="contained"
                     fullWidth
                     onClick={handleOfflineInstructions}
-                    sx={{ py: 1.5, fontWeight: 700, textTransform: 'none' }}
+                    sx={{ py: 1.6 }}
                   >
-                    Locate Inspectorate Offices
+                    Locate Police Branch Offices
                   </Button>
                 </Stack>
               )}

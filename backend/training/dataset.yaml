@@ -1,0 +1,15 @@
+# YOLOv8 Custom Dataset Configuration (B.Tech Major Project Fine-Tuning)
+path: ./training/datasets/traffic  # Dataset root directory relative to execution context
+
+train: images/train  # Training images subdirectory
+val: images/val      # Validation images subdirectory
+test: images/val     # Testing images subdirectory (fallback to validation)
+
+# Traffic class names mapping (aligned with system detection heuristics)
+names:
+  0: car
+  1: bike
+  2: bus
+  3: truck
+  4: auto
+  5: person

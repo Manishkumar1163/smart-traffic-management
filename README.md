@@ -1,6 +1,6 @@
 # 🚦 AI-Powered Smart Traffic Management System
 
-> Intelligent Traffic Monitoring using Computer Vision, OCR, and Artificial Intelligence.
+> Intelligent Traffic Monitoring using Computer Vision, OCR, Custom YOLOv8 Fine-Tuning, and Traffic Forecasting.
 
 [![Python](https://img.shields.io/badge/Python-3.10-blue?logo=python)]()
 [![FastAPI](https://img.shields.io/badge/FastAPI-Backend-green?logo=fastapi)]()
@@ -12,38 +12,39 @@
 
 ## 📌 Overview
 
-This project is an AI-powered Smart Traffic Management System that automates traffic monitoring using Computer Vision and Artificial Intelligence.
+This project is an AI-powered Smart Traffic Management System that automates urban traffic monitoring using Computer Vision and Deep Learning. 
 
-The system detects vehicles, recognizes number plates, identifies traffic violations, generates digital challans, and provides real-time analytics through a modern dashboard.
+The system tracks vehicles, flags speeding, wrong lane usage, wrong direction driving, and helmet compliance. Validated offenses trigger OCR license plate extraction, retrieve driver profiles, generate PDF invoices, and send automated notifications via Telegram and Email.
 
-Designed as a scalable full-stack solution, it demonstrates how AI can enhance urban traffic management and support smart city initiatives.
+---
 
-## ✨ Features
+## ✨ Key Features
 
-- 🚗 Real-time Vehicle Detection
-- 🚥 Traffic Violation Detection
-- 🔤 Automatic Number Plate Recognition (ANPR)
-- 📄 Digital Challan Generation
-- 📧 Email Notifications
-- 📊 Analytics Dashboard
-- 🗺 Interactive GIS Map
-- 🔐 JWT Authentication
-- 💳 Online Fine Payment
-- 📈 PDF & Excel Reports
+- **🚗 AI Vehicle Detection & Tracking**: Custom tracking engine for cars, bikes, buses, trucks, and autos.
+- **🚥 Traffic Violation Auditing**: Speed monitoring, red-light line tracking, wrong lane driving, wrong direction vector detection, and helmet safety.
+- **🔤 ANPR EasyOCR Pipeline**: License plate text extraction with composite evidence screenshots.
+- **🎯 Custom YOLOv8 Fine-Tuning**: A dedicated training module to fine-tune weights on local datasets.
+- **⚙️ ONNX Edge Deployment**: Optimization pipeline compiling trained PyTorch weights to ONNX files for NVIDIA Jetson Nano / Raspberry Pi processors.
+- **💬 Telegram Bot alerts**: Instant dispatch of e-challans containing plate number, violation type, fine, timestamp, payment URL, and evidence photo.
+- **📈 Double Exponential Smoothing Forecast**: Holt's linear trend forecast projecting hourly violation patterns.
+- **📊 Analytics Dashboard**: Charts.js visualizer charting daily, weekly, and monthly trends.
+- **🗺️ Leaflet GIS Mapping**: Interactive geographic mapping of camera nodes and logs.
+- **🔐 JWT Authentication & RBAC**: Secure admin, operator, and viewer roles.
+- **💳 Payment Sandbox**: Complete Stripe checkout simulation.
+
+---
 
 ## 🛠️ Tech Stack
 
 | Layer | Technology |
-|--------|------------|
-| Frontend | React.js |
-| Backend | FastAPI |
-| Database | MongoDB |
-| AI | YOLOv8 |
-| OCR | EasyOCR |
-| Vision | OpenCV |
-| Authentication | JWT |
-| Maps | Leaflet |
-| Charts | Chart.js |
+|---|---|
+| **Frontend** | React.js (Material UI, Leaflet, Chart.js) |
+| **Backend** | FastAPI (Uvicorn, Pydantic) |
+| **Database** | MongoDB (PyMongo / Motor) |
+| **AI / Vision** | YOLOv8 (Ultralytics), OpenCV, EasyOCR, PyTorch |
+| **Integrations** | Telegram Bot HTTP API, SMTP Email, Stripe Checkout |
+
+---
 
 ## 🏛 System Architecture
 
@@ -57,41 +58,62 @@ graph TD
     B --> F[ReportLab PDF Engine]
     B --> G[SMTP Email Service]
     B --> H[Stripe Payment Module]
+    B --> I[Telegram Bot API]
+    C -->|Auto-loads best.pt| J[Custom Weights]
+    C -->|optimize.py| K[ONNX Edge Export]
 ```  
-## 🚀 Project Highlights
 
-- ⚡ Real-time AI-based vehicle detection using **YOLOv8**
-- 🚗 Automatic Number Plate Recognition (ANPR) with **EasyOCR**
-- 📄 Automatic Digital Challan Generation
-- 📊 Interactive Analytics Dashboard with Charts
-- 🗺️ GIS-based Traffic Monitoring using Leaflet
-- 🔐 Secure JWT Authentication & Role-Based Access
-- 📧 Automated Email Notifications
-- 💳 Online Fine Payment Integration
-- 📈 PDF & Excel Report Generation
-- 🐳 Docker Support for Easy Deployment
+---
 
 ## 📂 Project Structure
 
 ```text
 smart-traffic-management/
 ├── backend/
-│   ├── config/         # App & DB Configs
+│   ├── config/         # Environment & Database settings
+│   ├── database/       # Seeder & connection handlers
 │   ├── middleware/     # Auth & CORS Middleware
-│   ├── models/         # Pydantic & Mongo Models
-│   ├── routes/         # REST API Endpoints
-│   ├── services/       # AI, OCR, PDF & Email logic
+│   ├── models/         # Pydantic & MongoDB Schemas
+│   ├── routes/         # API Endpoint controllers
+│   ├── scripts/        # Model optimization utilities
+│   ├── services/       # AI, Telegram, Email & PDF services
 │   ├── tests/          # Pytest suite
-│   ├── main.py         # Entry point
-│   └── requirements.txt
-├── frontend/
-│   ├── src/
-│   │   ├── components/ # Reusable UI Modules
-│   │   ├── pages/      # Dashboard, Map, Violations
-│   │   └── services/   # API Integration
+│   ├── training/       # YOLOv8 custom training scripts
+│   ├── main.py         # App launcher
+│   └── yolov8n.pt      # Model weights
+├── docs/               # System & Edge deployment documentation
+├── frontend/           # React dashboard SPA
 ├── docker-compose.yml
 └── README.md
 ```
+
+---
+
+## 🚀 Running the Custom Training & ONNX Export
+
+### 1. Custom YOLOv8 Fine-Tuning
+Execute the custom training script inside the backend virtual environment:
+
+```bash
+cd backend
+python -m venv venv
+# Activate virtualenv (Windows)
+.\venv\Scripts\activate
+# Run training script
+python training/train_yolo.py --epochs 5 --batch 4 --lr 0.01 --optimizer AdamW
+```
+This trains the model, saves the best weights to `backend/weights/best.pt`, and saves the evaluation report.
+
+### 2. Export Model to ONNX
+Export your trained model for edge hardware compilation:
+
+```bash
+python training/export_model.py
+```
+This saves `best.onnx` inside `backend/weights/`. Refer to `docs/EDGE_DEPLOYMENT.md` for Jetson Nano/Raspberry Pi deployment steps.
+
+---
+
 ## 🐳 Run with Docker (Recommended)
 
 Start all services with a single command:
@@ -106,38 +128,7 @@ Stop the services:
 docker-compose down
 ```
 
-## ⚙️ Installation
-
-### Clone the Repository
-
-```bash
-git clone https://github.com/Manishkumar1163/smart-traffic-management.git
-cd smart-traffic-management
-```
-
-### Backend Setup
-
-```bash
-cd backend
-python -m venv venv
-
-# Windows
-venv\Scripts\activate
-
-# Linux/macOS
-source venv/bin/activate
-
-pip install -r requirements.txt
-python main.py
-```
-
-### Frontend Setup
-
-```bash
-cd ../frontend
-npm install
-npm start
-```
+---
 
 ## 📄 License
 
@@ -145,14 +136,8 @@ This project is developed for educational and research purposes.
 
 ## 👨‍💻 Author
 
-**Manish Kumar**
-
-B.Tech CSE
-
-Artificial Intelligence • Computer Vision • Full Stack Development
+**Manish Kumar**  
+B.Tech CSE  
+Artificial Intelligence • Computer Vision • Full Stack Development  
 
 GitHub: [@Manishkumar1163](https://github.com/Manishkumar1163)
-
-## ⭐ Support
-
-If you found this project useful, please consider giving it a ⭐ on GitHub.

@@ -1,31 +1,69 @@
-﻿node_modules/
-venv/
-__pycache__/
+﻿# ================================
+# Environment & Secrets
+# ================================
 .env
-uploads/
-*.pyc# Backend
-backend/venv/
-backend/__pycache__/
-backend/*.pyc
-backend/.env
+.env.*
+!.env.example
+
+# ================================
+# Python
+# ================================
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+
+# ================================
+# Backend
+# ================================
 backend/uploads/videos/*
 backend/uploads/screenshots/*
+
 !backend/uploads/videos/.gitkeep
 !backend/uploads/screenshots/.gitkeep
-# Frontend
+
+# ================================
+# Node / Frontend
+# ================================
+node_modules/
 frontend/node_modules/
 frontend/build/
-frontend/.env
+frontend/dist/
+
+# ================================
 # Documentation
+# ================================
 docs/*.pdf
+
+# ================================
 # Screenshots
+# ================================
 screenshots/*.png
 screenshots/*.jpg
+screenshots/*.jpeg
+
+# ================================
 # IDE
+# ================================
 .vscode/
 .idea/
 *.swp
 *.swo
+
+# ================================
 # OS
+# ================================
 .DS_Store
 Thumbs.db
+
+# ================================
+# Logs
+# ================================
+*.log
+
+# ================================
+# Temporary files
+# ================================
+*.tmp
+*.temp
